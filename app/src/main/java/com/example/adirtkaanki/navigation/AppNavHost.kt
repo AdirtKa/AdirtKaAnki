@@ -1,5 +1,7 @@
 package com.example.adirtkaanki.navigation
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -15,11 +17,16 @@ fun AppNavHost() {
     val navController = rememberNavController()
 
     NavHost(
-        modifier = Modifier.safeDrawingPadding(),
+        // modifier = Modifier.safeDrawingPadding(),
         navController = navController,
         startDestination = Routes.LOGIN
     ) {
-        composable(Routes.LOGIN) {
+        composable(
+            Routes.LOGIN,
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None }) {
             LoginScreen(
                 onRegisterClick = {
                     navController.navigate(Routes.REGISTER)
@@ -32,7 +39,13 @@ fun AppNavHost() {
             )
         }
 
-        composable(Routes.REGISTER) {
+        composable(
+            Routes.REGISTER,
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None }
+        ) {
             RegisterScreen(
                 onLoginClick = {
                     navController.navigate(Routes.LOGIN)
@@ -40,7 +53,12 @@ fun AppNavHost() {
             )
         }
 
-        composable(Routes.DECKS) {
+        composable(
+            Routes.DECKS,
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None }) {
             Text("Main")
         }
     }

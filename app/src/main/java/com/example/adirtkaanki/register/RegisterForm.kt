@@ -61,6 +61,7 @@ fun RegisterForm(
             modifier = formElementModifier,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onBackground,
+            lineHeight = 34.sp
         )
 
         Spacer(modifier = Modifier.height(6.dp))

@@ -37,20 +37,25 @@ class RegisterViewModel(
 
     fun onSubmit() {
         uiState = uiState.copy(isLoading = true)
+        uiState.copy(username = uiState.username.trim())
 
         if (
             uiState.username.isBlank() ||
             uiState.password.isBlank() ||
             uiState.confirmPassword.isBlank()
         ) {
-            uiState = uiState.copy(errorMessage = "Заполните все поля")
-            uiState.copy(isLoading = false)
+            uiState = uiState.copy(
+                errorMessage = "Заполните все поля",
+                isLoading = false
+            )
             return
         }
 
         if (uiState.password != uiState.confirmPassword) {
-            uiState = uiState.copy(errorMessage = "Пароли не совпадают")
-            uiState.copy(isLoading = false)
+            uiState = uiState.copy(
+                errorMessage = "Пароли не совпадают",
+                isLoading = false
+            )
             return
         }
 

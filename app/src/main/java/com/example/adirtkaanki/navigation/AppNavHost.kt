@@ -16,6 +16,7 @@ import com.example.adirtkaanki.data.session.SessionViewModel
 import com.example.adirtkaanki.login.LoginScreen
 import com.example.adirtkaanki.register.RegisterScreen
 import com.example.adirtkaanki.splash.SplashScreen
+import com.example.adirtkaanki.decks.DecksScreen
 
 @Composable
 fun AppNavHost(
@@ -96,7 +97,14 @@ fun AppNavHost(
             exitTransition = { ExitTransition.None },
             popEnterTransition = { EnterTransition.None },
             popExitTransition = { ExitTransition.None }) {
-            Text("Main")
+
+            DecksScreen(
+                onLogoutSuccess = {
+                    navController.navigate(Routes.LOGIN) {
+                        popUpTo(Routes.DECKS) { inclusive = true }
+                    }
+                }
+            )
         }
     }
 }

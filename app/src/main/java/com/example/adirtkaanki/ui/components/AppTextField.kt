@@ -17,11 +17,19 @@ fun AppTextField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    forbidWhitespaces: Boolean = false
 ) {
     TextField(
         value = value,
-        onValueChange = onValueChange,
+        onValueChange = { newValue ->
+            val finalValue = if (forbidWhitespaces) {
+                newValue.filterNot { it.isWhitespace() }
+            } else {
+                newValue
+            }
+            onValueChange(finalValue)
+        },
         label = { Text(label) },
         modifier = modifier
             .widthIn(max = 420.dp)

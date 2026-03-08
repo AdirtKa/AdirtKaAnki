@@ -71,6 +71,7 @@ fun LoginForm(
             onValueChange = onUsernameChange,
             label = "Введите логин",
             modifier = formElementModifier,
+            forbidWhitespaces = true
         )
 
         AppTextField(
@@ -78,6 +79,7 @@ fun LoginForm(
             onValueChange = onPasswordChange,
             label = "Введите пароль",
             modifier = formElementModifier,
+            forbidWhitespaces = true
         )
 
         if (errorMessage != null) {

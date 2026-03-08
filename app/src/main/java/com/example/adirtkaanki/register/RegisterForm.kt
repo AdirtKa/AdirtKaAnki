@@ -70,6 +70,7 @@ fun RegisterForm(
             onValueChange = onUsernameChange,
             label = "Введите логин",
             modifier = formElementModifier,
+            forbidWhitespaces = true
         )
 
         AppTextField(
@@ -77,6 +78,7 @@ fun RegisterForm(
             onValueChange = onPasswordChange,
             label = "Введите пароль",
             modifier = formElementModifier,
+            forbidWhitespaces = true
         )
 
         AppTextField(
@@ -84,6 +86,7 @@ fun RegisterForm(
             onValueChange = onConfirmPasswordChange,
             label = "Повторите пароль",
             modifier = formElementModifier,
+            forbidWhitespaces = true
         )
 
         if (errorMessage != null) {

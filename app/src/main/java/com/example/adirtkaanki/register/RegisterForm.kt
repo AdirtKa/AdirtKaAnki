@@ -22,6 +22,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.adirtkaanki.ui.components.AppTextField
+import com.example.adirtkaanki.ui.components.LoadingButton
 
 
 @Composable
@@ -30,6 +31,7 @@ fun RegisterForm(
     password: String,
     confirmPassword: String,
     errorMessage: String?,
+    isLoading: Boolean,
     onUsernameChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onConfirmPasswordChange: (String) -> Unit,
@@ -91,12 +93,12 @@ fun RegisterForm(
             )
         }
 
-        Button(
+        LoadingButton(
+            text = "Зарегистрироваться",
+            isLoading = isLoading,
             onClick = onSubmit,
             modifier = formElementModifier
-        ) {
-            Text("Зарегистрироваться")
-        }
+        )
 
         TextButton(onClick = onLoginClick) {
             Text("Уже есть аккаунт? Войти")
@@ -114,6 +116,7 @@ fun LoginFormPreview() {
         errorMessage = null,
         onUsernameChange = {},
         onPasswordChange = {},
+        isLoading = false,
         onSubmit = {},
         onConfirmPasswordChange = {},
         onLoginClick = {}

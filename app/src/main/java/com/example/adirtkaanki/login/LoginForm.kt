@@ -25,6 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.adirtkaanki.ui.components.AppTextField
+import com.example.adirtkaanki.ui.components.LoadingButton
 
 
 @Composable
@@ -86,16 +87,12 @@ fun LoginForm(
             )
         }
 
-        Button(
+        LoadingButton(
+            text = "Войти",
+            isLoading = isLoading,
             onClick = onSubmit,
             modifier = formElementModifier
-        ) {
-            if (isLoading) {
-                Text("Загрузка...")
-            } else {
-                Text("Войти")
-            }
-        }
+        )
 
         TextButton(onClick = onRegisterClick) {
             Text("Еще нет аккаунта? Зарегистрироваться")

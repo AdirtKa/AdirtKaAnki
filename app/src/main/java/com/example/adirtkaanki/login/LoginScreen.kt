@@ -2,20 +2,25 @@ package com.example.adirtkaanki.login
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
 
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 
 @Composable
 fun LoginScreen(
-    viewModel: LoginViewModel = viewModel(),
     onRegisterClick: () -> Unit,
     onLoginSuccess: () -> Unit
 ) {
+    val context = LocalContext.current
+    val viewModel: LoginViewModel = viewModel(
+        factory = LoginViewModelFactory(context)
+    )
+
     val state = viewModel.uiState
 
-    if (state.isLoggedIn) {
-        LaunchedEffect(state.isLoggedIn) {
+    if (viewModel.loginSuccess) {
+        LaunchedEffect(viewModel.loginSuccess) {
             onLoginSuccess()
             viewModel.onNavigated()
         }

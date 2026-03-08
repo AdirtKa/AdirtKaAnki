@@ -15,16 +15,28 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.ViewModelProvider
+import com.example.adirtkaanki.data.session.SessionManager
+import com.example.adirtkaanki.data.session.SessionViewModel
+import com.example.adirtkaanki.data.session.SessionViewModelFactory
 import com.example.adirtkaanki.navigation.AppNavHost
 import com.example.adirtkaanki.ui.theme.AdirtKaAnkiTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val sessionViewModel = ViewModelProvider(
+            this,
+            SessionViewModelFactory(
+                SessionManager(applicationContext)
+            )
+        )[SessionViewModel::class.java]
+
         enableEdgeToEdge()
         setContent {
             AdirtKaAnkiTheme {
-                AppNavHost()
+                AppNavHost(sessionViewModel = sessionViewModel)
             }
         }
     }

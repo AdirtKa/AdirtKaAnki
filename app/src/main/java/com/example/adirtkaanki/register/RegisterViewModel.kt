@@ -36,8 +36,10 @@ class RegisterViewModel(
     }
 
     fun onSubmit() {
-        uiState = uiState.copy(isLoading = true)
-        uiState.copy(username = uiState.username.trim())
+        uiState = uiState.copy(
+            isLoading = true,
+            username = uiState.username.trim()
+        )
 
         if (
             uiState.username.isBlank() ||

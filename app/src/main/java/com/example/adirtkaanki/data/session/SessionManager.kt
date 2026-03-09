@@ -3,6 +3,7 @@ package com.example.adirtkaanki.data.session
 import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 class SessionManager(private val context: Context) {
@@ -14,6 +15,18 @@ class SessionManager(private val context: Context) {
 
     val accessTokenFlow = context.dataStore.data.map { prefs ->
         prefs[Keys.ACCESS_TOKEN]
+    }
+
+    val refreshTokenFlow = context.dataStore.data.map { prefs ->
+        prefs[Keys.REFRESH_TOKEN]
+    }
+
+    suspend fun getAccessToken(): String? {
+        return accessTokenFlow.first()
+    }
+
+    suspend fun getRefreshToken(): String? {
+        return refreshTokenFlow.first()
     }
 
     suspend fun saveSession(accessToken: String, refreshToken: String) {

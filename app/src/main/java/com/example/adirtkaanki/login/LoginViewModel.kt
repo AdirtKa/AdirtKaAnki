@@ -6,17 +6,21 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.adirtkaanki.data.Database
-import com.example.adirtkaanki.data.AuthRepository
-import com.example.adirtkaanki.data.LoginResult
+import com.example.adirtkaanki.data.remote.ApiFactory
+import com.example.adirtkaanki.data.remote.dto.TokenResponse
+import com.example.adirtkaanki.data.repository.AuthRepository
+import com.example.adirtkaanki.data.repository.LoginResult
 import com.example.adirtkaanki.data.session.SessionManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 
 class LoginViewModel(
     private val sessionManager: SessionManager
 ) : ViewModel() {
 
-    private val repository = AuthRepository(Database())
+    private val api = ApiFactory.createAuthApiService(sessionManager)
+    private val repository = AuthRepository(Database(), api, sessionManager)
 
     var uiState by mutableStateOf(LoginUiState())
         private set
@@ -45,27 +49,26 @@ class LoginViewModel(
 
         viewModelScope.launch {
             delay(2000)
-            when (val result = repository.login(uiState.username, uiState.password)) {
-                is LoginResult.Success -> {
-                    sessionManager.saveSession(
-                        accessToken = result.accessToken,
-                        refreshToken = result.refreshToken
-                    )
+            val result = repository.login(uiState.username, uiState.password)
 
-                    uiState = uiState.copy(
-                        isLoading = false,
-                        errorMessage = null
-                    )
+            if (result.isSuccess){
+                uiState = uiState.copy(
+                    isLoading = false,
+                    errorMessage = null
+                )
 
-                    loginSuccess = true
+                loginSuccess = true
+            } else {
+                val errorText = when (val e = result.exceptionOrNull()) {
+                    is HttpException -> "Ошибка сервера: ${e.code()}"
+                    else -> e?.message ?: "Не удалось выполнить вход"
                 }
 
-                is LoginResult.Error -> {
-                    uiState = uiState.copy(
-                        isLoading = false,
-                        errorMessage = result.message
-                    )
-                }
+                uiState = uiState.copy(
+                    isLoading = false,
+                    errorMessage = errorText
+                )
+                loginSuccess = false
             }
         }
     }

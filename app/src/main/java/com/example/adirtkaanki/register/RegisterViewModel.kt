@@ -1,22 +1,25 @@
 package com.example.adirtkaanki.register
 
-import android.provider.Contacts
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.adirtkaanki.data.AuthRepository
+import com.example.adirtkaanki.data.repository.AuthRepository
 import com.example.adirtkaanki.data.Database
-import com.example.adirtkaanki.data.LoginResult
+import com.example.adirtkaanki.data.remote.ApiFactory
+import com.example.adirtkaanki.data.repository.LoginResult
 import com.example.adirtkaanki.data.session.SessionManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 
 class RegisterViewModel(
     private val sessionManager: SessionManager
 ) : ViewModel() {
-    private val repository = AuthRepository(Database())
+
+    private val api = ApiFactory.createAuthApiService(sessionManager)
+    private val repository = AuthRepository(Database(), api, sessionManager)
     var registerSuccess by mutableStateOf(false)
         private set
 
@@ -63,28 +66,27 @@ class RegisterViewModel(
 
         viewModelScope.launch {
             delay(2000)
-            when (val result = repository.register(uiState.username, uiState.password)) {
-                is LoginResult.Success -> {
-                    sessionManager.saveSession(
-                        accessToken = result.accessToken,
-                        refreshToken = result.refreshToken
-                    )
+            val result = repository.register(uiState.username, uiState.password)
 
-                    uiState = uiState.copy(
-                        isLoading = false,
-                        errorMessage = null
-                    )
+            if (result.isSuccess) {
+                uiState = uiState.copy(
+                    isLoading = false,
+                    errorMessage = null
+                )
 
-                    registerSuccess = true
+                registerSuccess = true
+            } else {
+                val errorText = when (val e = result.exceptionOrNull()) {
+                    is HttpException -> "Ошибка сервера: ${e.code()}"
+                    else -> e?.message ?: "Не удалось выполнить вход"
                 }
-
-                is LoginResult.Error -> {
-                    uiState = uiState.copy(
-                        isLoading = false,
-                        errorMessage = result.message
-                    )
-                }
+                uiState = uiState.copy(
+                    isLoading = false,
+                    errorMessage = errorText
+                )
+                registerSuccess = false
             }
+
         }
 
     }

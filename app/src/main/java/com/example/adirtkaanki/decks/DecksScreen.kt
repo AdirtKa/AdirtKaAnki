@@ -40,7 +40,7 @@ fun DecksScreen(
                 .safeDrawingPadding()
                 .widthIn(200.dp)
                 .fillMaxWidth(),
-            text = "Выйти",
+            text = "Выйти из аккаунта - ${uiState.username}",
             isLoading = uiState.isLoading,
             onClick = viewModel::onLogout
         )

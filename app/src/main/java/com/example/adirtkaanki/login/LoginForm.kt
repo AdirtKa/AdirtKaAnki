@@ -85,6 +85,8 @@ fun LoginForm(
 
         if (errorMessage != null) {
             Text(
+                modifier = formElementModifier,
+                textAlign = TextAlign.Center,
                 text = errorMessage,
                 color = Color.Red
             )

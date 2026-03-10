@@ -5,9 +5,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.adirtkaanki.data.repository.AuthRepository
 import com.example.adirtkaanki.data.Database
 import com.example.adirtkaanki.data.remote.ApiFactory
+import com.example.adirtkaanki.data.repository.AuthRepository
+import com.example.adirtkaanki.data.repository.DecksRepository
 import com.example.adirtkaanki.data.session.SessionManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -15,8 +16,12 @@ import kotlinx.coroutines.launch
 class DecksViewModel(
     private val sessionManager: SessionManager
 ) : ViewModel() {
-    private val api = ApiFactory.createAuthApiService(sessionManager)
-    private val repository = AuthRepository(Database(), api, sessionManager)
+
+    private val authApi = ApiFactory.createAuthApiService(sessionManager)
+    private val decksApi = ApiFactory.createDecksApiService(sessionManager)
+
+    private val authRepository = AuthRepository(Database(), authApi, sessionManager)
+    private val decksRepository = DecksRepository(decksApi)
 
     var uiState by mutableStateOf(DecksUiState())
         private set
@@ -26,12 +31,13 @@ class DecksViewModel(
 
     init {
         loadMe()
+        loadDecks()
     }
 
     fun onLogout() {
         uiState = uiState.copy(isLoading = true)
+
         viewModelScope.launch {
-            delay(1000)
             sessionManager.clearSession()
             logoutSuccess = true
             uiState = uiState.copy(isLoading = false)
@@ -40,14 +46,70 @@ class DecksViewModel(
 
     fun loadMe() {
         viewModelScope.launch {
-            val result = repository.getMe()
+            val result = authRepository.getMe()
             val me = result.getOrNull()
+
             if (me != null) {
                 uiState = uiState.copy(username = me.username)
             } else {
-                println(result.exceptionOrNull()?.message)
+                uiState = uiState.copy(
+                    errorMessage = result.exceptionOrNull()?.message ?: "Не удалось загрузить пользователя"
+                )
             }
         }
+    }
+
+    fun loadDecks() {
+        viewModelScope.launch {
+            uiState = uiState.copy(isLoading = true, errorMessage = null)
+
+            val result = decksRepository.getDecks()
+
+            uiState = if (result.isSuccess) {
+                uiState.copy(
+                    isLoading = false,
+                    decks = result.getOrDefault(emptyList())
+                )
+            } else {
+                uiState.copy(
+                    isLoading = false,
+                    errorMessage = result.exceptionOrNull()?.message ?: "Не удалось загрузить колоды"
+                )
+            }
+        }
+    }
+
+    fun createDeck(name: String, onSuccess: () -> Unit = {}) {
+        val trimmedName = name.trim()
+        if (trimmedName.isEmpty()) return
+
+        viewModelScope.launch {
+            uiState = uiState.copy(isCreating = true, errorMessage = null)
+
+            val result = decksRepository.createDeck(trimmedName)
+
+            uiState = if (result.isSuccess) {
+                val createdDeck = result.getOrNull()
+
+                uiState.copy(
+                    isCreating = false,
+                    decks = if (createdDeck != null) uiState.decks + createdDeck else uiState.decks
+                )
+            } else {
+                uiState.copy(
+                    isCreating = false,
+                    errorMessage = result.exceptionOrNull()?.message ?: "Не удалось создать колоду"
+                )
+            }
+
+            if (result.isSuccess) {
+                onSuccess()
+            }
+        }
+    }
+
+    fun clearError() {
+        uiState = uiState.copy(errorMessage = null)
     }
 
     fun onLogoutNavigated() {

@@ -9,18 +9,20 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 
+private const val AUTH_PREFIX = "auth/"
+
 interface AuthApiService {
 
-    @POST("login")
+    @POST("${AUTH_PREFIX}login")
     suspend fun login(
         @Body request: LoginRequest
     ): TokenResponse
 
-    @POST("register")
+    @POST("${AUTH_PREFIX}register")
     suspend fun register(
         @Body request: RegisterRequest
     ): TokenResponse
 
-    @GET("me")
+    @GET("${AUTH_PREFIX}me")
     suspend fun me(): MeResponse
 }

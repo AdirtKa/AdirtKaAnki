@@ -8,38 +8,56 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object ApiFactory {
 
-//    private const val BASE_URL = "http://10.0.2.2:8000/"
+    // private const val BASE_URL = "http://10.0.2.2:8000/"
     private const val BASE_URL = "http://31.59.185.163:8047/"
 
-    fun createAuthApiService(sessionManager: SessionManager): AuthApiService {
-        val logging = HttpLoggingInterceptor().apply {
+    private fun createLoggingInterceptor(): HttpLoggingInterceptor {
+        return HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
+    }
 
-        val refreshClient = OkHttpClient.Builder()
-            .addInterceptor(logging)
+    private fun createRefreshClient(): OkHttpClient {
+        return OkHttpClient.Builder()
+            .addInterceptor(createLoggingInterceptor())
             .build()
+    }
 
-        val refreshRetrofit = Retrofit.Builder()
+    private fun createRefreshRetrofit(): Retrofit {
+        return Retrofit.Builder()
             .baseUrl(BASE_URL)
-            .client(refreshClient)
+            .client(createRefreshClient())
             .addConverterFactory(GsonConverterFactory.create())
             .build()
+    }
 
-        val tokenApi = refreshRetrofit.create(TokenApiService::class.java)
+    private fun createTokenApiService(): TokenApiService {
+        return createRefreshRetrofit().create(TokenApiService::class.java)
+    }
 
-        val mainClient = OkHttpClient.Builder()
+    private fun createMainClient(sessionManager: SessionManager): OkHttpClient {
+        val tokenApi = createTokenApiService()
+
+        return OkHttpClient.Builder()
             .addInterceptor(AuthInterceptor(sessionManager))
             .authenticator(TokenAuthenticator(sessionManager, tokenApi))
-            .addInterceptor(logging)
+            .addInterceptor(createLoggingInterceptor())
             .build()
+    }
 
-        val mainRetrofit = Retrofit.Builder()
+    private fun createMainRetrofit(sessionManager: SessionManager): Retrofit {
+        return Retrofit.Builder()
             .baseUrl(BASE_URL)
-            .client(mainClient)
+            .client(createMainClient(sessionManager))
             .addConverterFactory(GsonConverterFactory.create())
             .build()
+    }
 
-        return mainRetrofit.create(AuthApiService::class.java)
+    fun createAuthApiService(sessionManager: SessionManager): AuthApiService {
+        return createMainRetrofit(sessionManager).create(AuthApiService::class.java)
+    }
+
+    fun createDecksApiService(sessionManager: SessionManager): DecksApiService {
+        return createMainRetrofit(sessionManager).create(DecksApiService::class.java)
     }
 }

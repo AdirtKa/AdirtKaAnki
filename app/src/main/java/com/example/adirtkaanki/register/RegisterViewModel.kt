@@ -65,7 +65,6 @@ class RegisterViewModel(
         }
 
         viewModelScope.launch {
-            delay(2000)
             val result = repository.register(uiState.username, uiState.password)
 
             if (result.isSuccess) {

@@ -48,7 +48,6 @@ class LoginViewModel(
         }
 
         viewModelScope.launch {
-            delay(2000)
             val result = repository.login(uiState.username, uiState.password)
 
             if (result.isSuccess){

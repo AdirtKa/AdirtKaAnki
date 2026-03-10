@@ -1,9 +1,12 @@
 package com.example.adirtkaanki.decks
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -11,18 +14,23 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import com.example.adirtkaanki.data.model.Deck
 import com.example.adirtkaanki.ui.components.LoadingButton
 
 @Composable
@@ -34,7 +42,11 @@ fun DecksScreenContent(
     onShowCreateDeckDialog: () -> Unit,
     onDismissCreateDeckDialog: () -> Unit,
     onConfirmCreateDeck: () -> Unit,
-    onLogoutClick: () -> Unit
+    onLogoutClick: () -> Unit,
+    selectedDeckForMenu: Deck?,
+    onDeckLongClick: (Deck) -> Unit,
+    onDismissDeckMenu: () -> Unit,
+    onDeleteDeckClick: (Deck) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -93,19 +105,41 @@ fun DecksScreenContent(
                     items = uiState.decks,
                     key = { deck -> deck.id }
                 ) { deck ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface
-                        )
-                    ) {
-                        Text(
-                            text = deck.name,
-                            modifier = Modifier.padding(16.dp),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
+                    Box {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .combinedClickable(
+                                    onClick = {println("click $deck")},
+                                    onLongClick = {
+                                        onDeckLongClick(deck)
+                                    }
+                                ),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surface
+                            )
+                        ) {
+                            Text(
+                                text = deck.name,
+                                modifier = Modifier.padding(16.dp),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+
+                        DropdownMenu(
+                            modifier = Modifier.background(color = MaterialTheme.colorScheme.surface),
+                            expanded = selectedDeckForMenu?.id == deck.id,
+                            shape = RoundedCornerShape(20.dp),
+                            offset = DpOffset(x = 0.dp, y = 8.dp),
+                            onDismissRequest = onDismissDeckMenu
+                        ) {
+                            DropdownMenuItem(
+
+                                text = {Text("Удалить")},
+                                onClick = {onDeleteDeckClick(deck)}
+                            )
+                        }
                     }
                 }
             }

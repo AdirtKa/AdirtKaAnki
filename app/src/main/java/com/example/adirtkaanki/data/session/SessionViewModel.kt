@@ -5,7 +5,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 sealed interface SessionState {
@@ -22,18 +21,18 @@ class SessionViewModel(
         private set
 
     init {
-        checkSession()
+        observeSession()
     }
 
-    private fun checkSession() {
+    private fun observeSession() {
         viewModelScope.launch {
             try {
-                val token = sessionManager.accessTokenFlow.first()
-
-                sessionState = if (token.isNullOrBlank()) {
-                    SessionState.LoggedOut
-                } else {
-                    SessionState.LoggedIn
+                sessionManager.accessTokenFlow.collect { token ->
+                    sessionState = if (token.isNullOrBlank()) {
+                        SessionState.LoggedOut
+                    } else {
+                        SessionState.LoggedIn
+                    }
                 }
             } catch (e: Exception) {
                 sessionState = SessionState.LoggedOut

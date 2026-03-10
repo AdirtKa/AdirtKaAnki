@@ -10,7 +10,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun LoginScreen(
     onRegisterClick: () -> Unit,
-    onLoginSuccess: () -> Unit
+    // onLoginSuccess: () -> Unit
 ) {
     val context = LocalContext.current
     val viewModel: LoginViewModel = viewModel(
@@ -21,7 +21,7 @@ fun LoginScreen(
 
     if (viewModel.loginSuccess) {
         LaunchedEffect(viewModel.loginSuccess) {
-            onLoginSuccess()
+            // onLoginSuccess()
             viewModel.onNavigated()
         }
     }

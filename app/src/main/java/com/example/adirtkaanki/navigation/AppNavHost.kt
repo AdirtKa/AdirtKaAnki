@@ -25,35 +25,49 @@ fun AppNavHost(
     val navController = rememberNavController()
     val sessionState = sessionViewModel.sessionState
 
-    NavHost(
-        // modifier = Modifier.safeDrawingPadding(),
-        navController = navController,
-        startDestination = Routes.SPLASH
-    ) {
-        composable(Routes.SPLASH) {
-            SplashScreen(sessionState = sessionState)
+    LaunchedEffect(sessionState) {
+        when (sessionState) {
+            SessionState.Loading -> Unit
 
-            LaunchedEffect(sessionState) {
-                when (sessionState) {
-                    SessionState.Loading -> Unit
-                    SessionState.LoggedIn -> {
-                        navController.navigate(Routes.DECKS) {
-                            popUpTo(Routes.SPLASH) { inclusive = true }
-                        }
+            SessionState.LoggedIn -> {
+                val currentRoute = navController.currentBackStackEntry?.destination?.route
+                if (currentRoute != Routes.DECKS) {
+                    navController.navigate(
+                        Routes.DECKS,
+                    ) {
+                        popUpTo(0) { inclusive = true }
+                        launchSingleTop = true
                     }
+                }
+            }
 
-                    SessionState.LoggedOut -> {
-                        navController.navigate(Routes.LOGIN) {
-                            popUpTo(Routes.SPLASH) { inclusive = true }
-                        }
+            SessionState.LoggedOut -> {
+                val currentRoute = navController.currentBackStackEntry?.destination?.route
+                if (currentRoute != Routes.LOGIN) {
+                    navController.navigate(Routes.LOGIN) {
+                        popUpTo(0) { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             }
         }
+    }
+
+    NavHost(
+        navController = navController,
+        startDestination = Routes.SPLASH
+    ) {
+        composable(
+            Routes.SPLASH,
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None }) {
+            SplashScreen(sessionState = sessionState)
+        }
 
         composable(
-            Routes.LOGIN,
-            enterTransition = { EnterTransition.None },
+            Routes.LOGIN, enterTransition = { EnterTransition.None },
             exitTransition = { ExitTransition.None },
             popEnterTransition = { EnterTransition.None },
             popExitTransition = { ExitTransition.None }) {
@@ -61,13 +75,6 @@ fun AppNavHost(
                 onRegisterClick = {
                     navController.navigate(Routes.REGISTER)
                 },
-
-                onLoginSuccess = {
-                    navController.navigate(Routes.DECKS) {
-                        popUpTo(Routes.LOGIN) { inclusive = true }
-                    }
-                }
-
             )
         }
 
@@ -76,35 +83,20 @@ fun AppNavHost(
             enterTransition = { EnterTransition.None },
             exitTransition = { ExitTransition.None },
             popEnterTransition = { EnterTransition.None },
-            popExitTransition = { ExitTransition.None }
-        ) {
+            popExitTransition = { ExitTransition.None }) {
             RegisterScreen(
                 onLoginClick = {
                     navController.navigate(Routes.LOGIN)
                 },
-
-                onRegisterSuccess = {
-                    navController.navigate(Routes.DECKS) {
-                        popUpTo(Routes.REGISTER) { inclusive = true }
-                    }
-                }
             )
         }
 
         composable(
-            Routes.DECKS,
-            enterTransition = { EnterTransition.None },
+            Routes.DECKS, enterTransition = { EnterTransition.None },
             exitTransition = { ExitTransition.None },
             popEnterTransition = { EnterTransition.None },
             popExitTransition = { ExitTransition.None }) {
-
-            DecksScreen(
-                onLogoutSuccess = {
-                    navController.navigate(Routes.LOGIN) {
-                        popUpTo(Routes.DECKS) { inclusive = true }
-                    }
-                }
-            )
+            DecksScreen()
         }
     }
 }

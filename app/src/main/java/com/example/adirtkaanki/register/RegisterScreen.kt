@@ -7,7 +7,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun RegisterScreen(
-    onRegisterSuccess: () -> Unit,
+    // onRegisterSuccess: () -> Unit,
     onLoginClick: () -> Unit
 ) {
     val context = LocalContext.current
@@ -19,7 +19,7 @@ fun RegisterScreen(
 
     if (viewModel.registerSuccess) {
         LaunchedEffect(viewModel.registerSuccess) {
-            onRegisterSuccess()
+            // onRegisterSuccess()
             viewModel.onNavigated()
         }
     }

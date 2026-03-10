@@ -36,7 +36,7 @@ import com.example.adirtkaanki.ui.components.LoadingButton
 
 @Composable
 fun DecksScreen(
-    onLogoutSuccess: () -> Unit
+//    onLogoutSuccess: () -> Unit
 ) {
     val context = LocalContext.current
     val viewModel: DecksViewModel = viewModel(factory = DecksViewModelFactory(context))
@@ -44,10 +44,11 @@ fun DecksScreen(
 
     var showCreateDeckDialog by remember { mutableStateOf(false) }
     var deckName by remember { mutableStateOf("") }
+    var selectedDeckForMenu by remember { mutableStateOf<Deck?>(null) }
 
     if (viewModel.logoutSuccess) {
         LaunchedEffect(viewModel.logoutSuccess) {
-            onLogoutSuccess()
+//            onLogoutSuccess()
             viewModel.onLogoutNavigated()
         }
     }
@@ -70,7 +71,15 @@ fun DecksScreen(
                 showCreateDeckDialog = false
             }
         },
-        onLogoutClick = viewModel::onLogout
+        onLogoutClick = viewModel::onLogout,
+        selectedDeckForMenu = selectedDeckForMenu,
+        onDeckLongClick = { deck -> selectedDeckForMenu = deck },
+        onDismissDeckMenu = { selectedDeckForMenu = null },
+        onDeleteDeckClick = { deck ->
+            selectedDeckForMenu = null
+            println(deck)
+        }
+
     )
 }
 
@@ -101,7 +110,11 @@ private fun DecksScreenPreview() {
         onShowCreateDeckDialog = {},
         onDismissCreateDeckDialog = {},
         onConfirmCreateDeck = {},
-        onLogoutClick = {}
+        onLogoutClick = {},
+        onDeckLongClick = {},
+        onDismissDeckMenu = {},
+        onDeleteDeckClick = {},
+        selectedDeckForMenu = null,
     )
 
 }

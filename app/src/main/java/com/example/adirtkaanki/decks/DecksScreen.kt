@@ -1,5 +1,6 @@
 package com.example.adirtkaanki.decks
 
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -27,8 +28,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.adirtkaanki.data.model.Deck
 import com.example.adirtkaanki.ui.components.LoadingButton
 
 @Composable
@@ -49,122 +52,56 @@ fun DecksScreen(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .safeDrawingPadding()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text(
-            text = "Колоды пользователя: ${uiState.username}",
-            style = MaterialTheme.typography.headlineSmall
-        )
+    DecksScreenContent(
+        uiState = uiState,
+        showCreateDeckDialog = showCreateDeckDialog,
+        deckName = deckName,
+        onDeckNameChange = { deckName = it },
+        onShowCreateDeckDialog = { showCreateDeckDialog = true },
+        onDismissCreateDeckDialog = {
+            if (!uiState.isCreating) {
+                showCreateDeckDialog = false
+                deckName = ""
+            }
+        },
+        onConfirmCreateDeck = {
+            viewModel.createDeck(deckName) {
+                deckName = ""
+                showCreateDeckDialog = false
+            }
+        },
+        onLogoutClick = viewModel::onLogout
+    )
+}
 
-        Button(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = { showCreateDeckDialog = true }
-        ) {
-            Text("Создать колоду")
-        }
+@Preview(showBackground = true, showSystemUi = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun DecksScreenPreview() {
 
-        uiState.errorMessage?.let { error ->
-            Card(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = error,
-                    modifier = Modifier.padding(16.dp),
-                    color = MaterialTheme.colorScheme.error
+    DecksScreenContent(
+        uiState = DecksUiState(
+            isLoading = false,
+            isCreating = false,
+            username = "daniil",
+            decks = listOf(
+                Deck(
+                    id = "550e8400-e29b-41d4-a716-446655440000",
+                    name = "English words"
+                ),
+                Deck(
+                    id = "550e8400-e29b-41d4-a716-446655440001",
+                    name = "Japanese N5"
                 )
-            }
-        }
+            ),
+            errorMessage = null
+        ),
+        showCreateDeckDialog = false,
+        deckName = "",
+        onDeckNameChange = {},
+        onShowCreateDeckDialog = {},
+        onDismissCreateDeckDialog = {},
+        onConfirmCreateDeck = {},
+        onLogoutClick = {}
+    )
 
-        if (uiState.isLoading) {
-            CircularProgressIndicator()
-        } else {
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(vertical = 4.dp)
-            ) {
-                if (uiState.decks.isEmpty()) {
-                    item {
-                        Text(
-                            text = "Пока нет колод",
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
-                }
-
-                items(uiState.decks) { deck ->
-                    Card(
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = deck.name,
-                            modifier = Modifier.padding(16.dp),
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                    }
-                }
-            }
-        }
-
-        LoadingButton(
-            modifier = Modifier
-                .widthIn(200.dp)
-                .fillMaxWidth(),
-            text = "Выйти из аккаунта - ${uiState.username}",
-            isLoading = uiState.isLoading,
-            onClick = viewModel::onLogout
-        )
-    }
-
-    if (showCreateDeckDialog) {
-        AlertDialog(
-            onDismissRequest = {
-                if (!uiState.isCreating) {
-                    showCreateDeckDialog = false
-                    deckName = ""
-                }
-            },
-            title = { Text("Создание колоды") },
-            text = {
-                OutlinedTextField(
-                    value = deckName,
-                    onValueChange = { deckName = it },
-                    label = { Text("Название колоды") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.createDeck(deckName) {
-                            deckName = ""
-                            showCreateDeckDialog = false
-                        }
-                    },
-                    enabled = !uiState.isCreating && deckName.trim().isNotEmpty()
-                ) {
-                    Text(if (uiState.isCreating) "Создание..." else "Создать")
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        if (!uiState.isCreating) {
-                            deckName = ""
-                            showCreateDeckDialog = false
-                        }
-                    }
-                ) {
-                    Text("Отмена")
-                }
-            }
-        )
-    }
 }

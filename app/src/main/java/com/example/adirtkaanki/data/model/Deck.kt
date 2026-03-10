@@ -1,6 +1,6 @@
 package com.example.adirtkaanki.data.model
 
 data class Deck(
-    val id: Int,
+    val id: String,
     val name: String
 )

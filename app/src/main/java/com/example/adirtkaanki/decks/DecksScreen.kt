@@ -76,8 +76,7 @@ fun DecksScreen(
         onDeckLongClick = { deck -> selectedDeckForMenu = deck },
         onDismissDeckMenu = { selectedDeckForMenu = null },
         onDeleteDeckClick = { deck ->
-            selectedDeckForMenu = null
-            println(deck)
+            viewModel.deleteDeck(deck)
         }
 
     )

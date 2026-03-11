@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.adirtkaanki.data.Database
+import com.example.adirtkaanki.data.model.Deck
 import com.example.adirtkaanki.data.remote.ApiFactory
 import com.example.adirtkaanki.data.repository.AuthRepository
 import com.example.adirtkaanki.data.repository.DecksRepository
@@ -53,7 +54,8 @@ class DecksViewModel(
                 uiState = uiState.copy(username = me.username)
             } else {
                 uiState = uiState.copy(
-                    errorMessage = result.exceptionOrNull()?.message ?: "Не удалось загрузить пользователя"
+                    errorMessage = result.exceptionOrNull()?.message
+                        ?: "Не удалось загрузить пользователя"
                 )
             }
         }
@@ -73,7 +75,8 @@ class DecksViewModel(
             } else {
                 uiState.copy(
                     isLoading = false,
-                    errorMessage = result.exceptionOrNull()?.message ?: "Не удалось загрузить колоды"
+                    errorMessage = result.exceptionOrNull()?.message
+                        ?: "Не удалось загрузить колоды"
                 )
             }
         }
@@ -106,6 +109,24 @@ class DecksViewModel(
                 onSuccess()
             }
         }
+    }
+
+    fun deleteDeck(deck: Deck) {
+        viewModelScope.launch {
+            val result = decksRepository.deleteDeck(deck.id)
+
+            if (result.isSuccess) {
+                uiState = uiState.copy(
+                    decks = uiState.decks.filter({ it.id != deck.id }),
+                    errorMessage = null
+                )
+            } else {
+                uiState = uiState.copy(
+                    errorMessage = result.exceptionOrNull()?.message ?: "Не удалосьб удалить колоду"
+                )
+            }
+        }
+
     }
 
     fun clearError() {

@@ -5,12 +5,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.adirtkaanki.data.repository.AuthRepository
-import com.example.adirtkaanki.data.Database
 import com.example.adirtkaanki.data.remote.ApiFactory
-import com.example.adirtkaanki.data.repository.LoginResult
+import com.example.adirtkaanki.data.repository.AuthRepository
 import com.example.adirtkaanki.data.session.SessionManager
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 
@@ -19,7 +16,7 @@ class RegisterViewModel(
 ) : ViewModel() {
 
     private val api = ApiFactory.createAuthApiService(sessionManager)
-    private val repository = AuthRepository(Database(), api, sessionManager)
+    private val repository = AuthRepository(api, sessionManager)
     var registerSuccess by mutableStateOf(false)
         private set
 

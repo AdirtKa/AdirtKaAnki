@@ -8,12 +8,11 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object ApiFactory {
 
-    private const val BASE_URL = "http://10.0.2.2:8047/"
-    //private const val BASE_URL = "http://31.59.185.163:8047/"
+    private val baseUrl = ApiConfig.BASE_URL
 
     private fun createLoggingInterceptor(): HttpLoggingInterceptor {
         return HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            level = HttpLoggingInterceptor.Level.NONE
         }
     }
 
@@ -25,7 +24,7 @@ object ApiFactory {
 
     private fun createRefreshRetrofit(): Retrofit {
         return Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(baseUrl)
             .client(createRefreshClient())
             .addConverterFactory(GsonConverterFactory.create())
             .build()
@@ -47,7 +46,7 @@ object ApiFactory {
 
     private fun createMainRetrofit(sessionManager: SessionManager): Retrofit {
         return Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(baseUrl)
             .client(createMainClient(sessionManager))
             .addConverterFactory(GsonConverterFactory.create())
             .build()

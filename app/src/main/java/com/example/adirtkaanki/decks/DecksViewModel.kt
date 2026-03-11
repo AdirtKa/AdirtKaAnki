@@ -5,13 +5,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.adirtkaanki.data.Database
 import com.example.adirtkaanki.data.model.Deck
 import com.example.adirtkaanki.data.remote.ApiFactory
 import com.example.adirtkaanki.data.repository.AuthRepository
 import com.example.adirtkaanki.data.repository.DecksRepository
 import com.example.adirtkaanki.data.session.SessionManager
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class DecksViewModel(
@@ -21,7 +19,7 @@ class DecksViewModel(
     private val authApi = ApiFactory.createAuthApiService(sessionManager)
     private val decksApi = ApiFactory.createDecksApiService(sessionManager)
 
-    private val authRepository = AuthRepository(Database(), authApi, sessionManager)
+    private val authRepository = AuthRepository(authApi, sessionManager)
     private val decksRepository = DecksRepository(decksApi)
 
     var uiState by mutableStateOf(DecksUiState())
@@ -117,7 +115,7 @@ class DecksViewModel(
 
             if (result.isSuccess) {
                 uiState = uiState.copy(
-                    decks = uiState.decks.filter({ it.id != deck.id }),
+                    decks = uiState.decks.filter { it.id != deck.id },
                     errorMessage = null
                 )
             } else {

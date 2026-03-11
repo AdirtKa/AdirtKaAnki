@@ -13,36 +13,52 @@ class TokenAuthenticator(
     private val tokenApi: TokenApiService
 ) : Authenticator {
 
+    private val refreshLock = Any()
+
     override fun authenticate(route: Route?, response: Response): Request? {
-        // Не уходим в бесконечный цикл
         if (responseCount(response) >= 2) {
             return null
         }
 
-        return runBlocking {
-            val refreshToken = sessionManager.getRefreshToken()
+        return synchronized(refreshLock) {
+            runBlocking {
+                val requestAccessToken = response.request.header("Authorization")
+                    ?.removePrefix("Bearer ")
+                val currentAccessToken = sessionManager.getAccessToken()
 
-            if (refreshToken.isNullOrBlank()) {
-                sessionManager.clearSession()
-                return@runBlocking null
-            }
+                if (
+                    !requestAccessToken.isNullOrBlank() &&
+                    !currentAccessToken.isNullOrBlank() &&
+                    requestAccessToken != currentAccessToken
+                ) {
+                    return@runBlocking response.request.newBuilder()
+                        .header("Authorization", "Bearer $currentAccessToken")
+                        .build()
+                }
 
-            try {
-                val tokenResponse = tokenApi.refresh(
-                    RefreshRequest(refreshToken = refreshToken)
-                )
+                val refreshToken = sessionManager.getRefreshToken()
+                if (refreshToken.isNullOrBlank()) {
+                    sessionManager.clearSession()
+                    return@runBlocking null
+                }
 
-                sessionManager.saveSession(
-                    accessToken = tokenResponse.accessToken,
-                    refreshToken = tokenResponse.refreshToken
-                )
+                try {
+                    val tokenResponse = tokenApi.refresh(
+                        RefreshRequest(refreshToken = refreshToken)
+                    )
 
-                response.request.newBuilder()
-                    .header("Authorization", "Bearer ${tokenResponse.accessToken}")
-                    .build()
-            } catch (e: Exception) {
-                sessionManager.clearSession()
-                null
+                    sessionManager.saveSession(
+                        accessToken = tokenResponse.accessToken,
+                        refreshToken = tokenResponse.refreshToken
+                    )
+
+                    response.request.newBuilder()
+                        .header("Authorization", "Bearer ${tokenResponse.accessToken}")
+                        .build()
+                } catch (e: Exception) {
+                    sessionManager.clearSession()
+                    null
+                }
             }
         }
     }

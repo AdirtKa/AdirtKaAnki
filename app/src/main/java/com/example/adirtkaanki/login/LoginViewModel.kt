@@ -5,13 +5,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.adirtkaanki.data.Database
 import com.example.adirtkaanki.data.remote.ApiFactory
-import com.example.adirtkaanki.data.remote.dto.TokenResponse
 import com.example.adirtkaanki.data.repository.AuthRepository
-import com.example.adirtkaanki.data.repository.LoginResult
 import com.example.adirtkaanki.data.session.SessionManager
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 
@@ -20,7 +16,7 @@ class LoginViewModel(
 ) : ViewModel() {
 
     private val api = ApiFactory.createAuthApiService(sessionManager)
-    private val repository = AuthRepository(Database(), api, sessionManager)
+    private val repository = AuthRepository(api, sessionManager)
 
     var uiState by mutableStateOf(LoginUiState())
         private set
@@ -42,15 +38,17 @@ class LoginViewModel(
             uiState.username.isBlank() ||
             uiState.password.isBlank()
         ) {
-            uiState = uiState.copy(errorMessage = "Заполните все поля")
-           uiState = uiState.copy(isLoading = false)
+            uiState = uiState.copy(
+                errorMessage = "Заполните все поля",
+                isLoading = false
+            )
             return
         }
 
         viewModelScope.launch {
             val result = repository.login(uiState.username, uiState.password)
 
-            if (result.isSuccess){
+            if (result.isSuccess) {
                 uiState = uiState.copy(
                     isLoading = false,
                     errorMessage = null

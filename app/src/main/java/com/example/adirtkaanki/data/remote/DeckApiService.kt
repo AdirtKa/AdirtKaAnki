@@ -2,7 +2,6 @@ package com.example.adirtkaanki.data.remote
 
 import com.example.adirtkaanki.data.remote.dto.CreateDeckRequest
 import com.example.adirtkaanki.data.remote.dto.DeckDto
-import com.example.adirtkaanki.data.remote.dto.DeleteDeckRequest
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -22,5 +21,5 @@ interface DecksApiService {
     @DELETE("decks/{id}")
     suspend fun deleteDeck(
         @Path("id") id: String
-    ): Unit
+    )
 }

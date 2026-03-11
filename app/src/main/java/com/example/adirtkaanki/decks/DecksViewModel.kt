@@ -52,32 +52,41 @@ class DecksViewModel(
                 uiState = uiState.copy(username = me.username)
             } else {
                 uiState = uiState.copy(
-                    errorMessage = result.exceptionOrNull()?.message
-                        ?: "Не удалось загрузить пользователя"
+                    errorMessage = result.exceptionOrNull()?.message ?: "Failed to load user"
                 )
             }
         }
     }
 
-    fun loadDecks() {
+    fun loadDecks(showLoading: Boolean = true) {
         viewModelScope.launch {
-            uiState = uiState.copy(isLoading = true, errorMessage = null)
+            uiState = uiState.copy(
+                isLoading = if (showLoading) true else uiState.isLoading,
+                isRefreshing = !showLoading,
+                errorMessage = null
+            )
 
             val result = decksRepository.getDecks()
 
             uiState = if (result.isSuccess) {
                 uiState.copy(
                     isLoading = false,
+                    isRefreshing = false,
                     decks = result.getOrDefault(emptyList())
                 )
             } else {
                 uiState.copy(
                     isLoading = false,
-                    errorMessage = result.exceptionOrNull()?.message
-                        ?: "Не удалось загрузить колоды"
+                    isRefreshing = false,
+                    errorMessage = result.exceptionOrNull()?.message ?: "Failed to load decks"
                 )
             }
         }
+    }
+
+    fun refresh() {
+        loadDecks(showLoading = false)
+        loadMe()
     }
 
     fun createDeck(name: String, onSuccess: () -> Unit = {}) {
@@ -99,7 +108,36 @@ class DecksViewModel(
             } else {
                 uiState.copy(
                     isCreating = false,
-                    errorMessage = result.exceptionOrNull()?.message ?: "Не удалось создать колоду"
+                    errorMessage = result.exceptionOrNull()?.message ?: "Failed to create deck"
+                )
+            }
+
+            if (result.isSuccess) {
+                onSuccess()
+            }
+        }
+    }
+
+    fun renameDeck(deck: Deck, newName: String, onSuccess: () -> Unit = {}) {
+        val trimmedName = newName.trim()
+        if (trimmedName.isEmpty()) return
+
+        viewModelScope.launch {
+            uiState = uiState.copy(isRenaming = true, errorMessage = null)
+            val result = decksRepository.renameDeck(deck.id, trimmedName)
+
+            uiState = if (result.isSuccess) {
+                val renamedDeck = result.getOrNull()
+                uiState.copy(
+                    isRenaming = false,
+                    decks = uiState.decks.map {
+                        if (it.id == deck.id && renamedDeck != null) renamedDeck else it
+                    }
+                )
+            } else {
+                uiState.copy(
+                    isRenaming = false,
+                    errorMessage = result.exceptionOrNull()?.message ?: "Failed to rename deck"
                 )
             }
 
@@ -120,11 +158,10 @@ class DecksViewModel(
                 )
             } else {
                 uiState = uiState.copy(
-                    errorMessage = result.exceptionOrNull()?.message ?: "Не удалосьб удалить колоду"
+                    errorMessage = result.exceptionOrNull()?.message ?: "Failed to delete deck"
                 )
             }
         }
-
     }
 
     fun clearError() {

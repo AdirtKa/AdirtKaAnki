@@ -47,7 +47,7 @@ class RegisterViewModel(
             uiState.confirmPassword.isBlank()
         ) {
             uiState = uiState.copy(
-                errorMessage = "Заполните все поля",
+                errorMessage = "Fill in all fields",
                 isLoading = false
             )
             return
@@ -55,7 +55,7 @@ class RegisterViewModel(
 
         if (uiState.password != uiState.confirmPassword) {
             uiState = uiState.copy(
-                errorMessage = "Пароли не совпадают",
+                errorMessage = "Passwords do not match",
                 isLoading = false
             )
             return
@@ -73,8 +73,8 @@ class RegisterViewModel(
                 registerSuccess = true
             } else {
                 val errorText = when (val e = result.exceptionOrNull()) {
-                    is HttpException -> "Ошибка сервера: ${e.code()}"
-                    else -> e?.message ?: "Не удалось выполнить вход"
+                    is HttpException -> "Server error: ${e.code()}"
+                    else -> e?.message ?: "Failed to sign up"
                 }
                 uiState = uiState.copy(
                     isLoading = false,

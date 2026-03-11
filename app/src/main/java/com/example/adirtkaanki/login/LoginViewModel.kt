@@ -39,7 +39,7 @@ class LoginViewModel(
             uiState.password.isBlank()
         ) {
             uiState = uiState.copy(
-                errorMessage = "Заполните все поля",
+                errorMessage = "Fill in all fields",
                 isLoading = false
             )
             return
@@ -57,8 +57,8 @@ class LoginViewModel(
                 loginSuccess = true
             } else {
                 val errorText = when (val e = result.exceptionOrNull()) {
-                    is HttpException -> "Ошибка сервера: ${e.code()}"
-                    else -> e?.message ?: "Не удалось выполнить вход"
+                    is HttpException -> "Server error: ${e.code()}"
+                    else -> e?.message ?: "Failed to sign in"
                 }
 
                 uiState = uiState.copy(

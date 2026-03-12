@@ -4,8 +4,10 @@ import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,11 +21,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -36,6 +37,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -123,18 +125,11 @@ fun CreateCardScreenContent(
             )
         }
 
-        TabRow(selectedTabIndex = selectedSide) {
-            Tab(
-                selected = selectedSide == 0,
-                onClick = { selectedSide = 0 },
-                text = { Text("Front") }
-            )
-            Tab(
-                selected = selectedSide == 1,
-                onClick = { selectedSide = 1 },
-                text = { Text("Back") }
-            )
-        }
+        SideSwitch(
+            selectedSide = selectedSide,
+            onFrontClick = { selectedSide = 0 },
+            onBackClick = { selectedSide = 1 }
+        )
 
         SideEditorContainer {
             if (selectedSide == 0) {
@@ -191,6 +186,77 @@ fun CreateCardScreenContent(
             text = saveButtonText,
             isLoading = uiState.isSaving,
             onClick = onSaveClick
+        )
+    }
+}
+
+@Composable
+private fun SideSwitch(
+    selectedSide: Int,
+    onFrontClick: () -> Unit,
+    onBackClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f),
+                shape = RoundedCornerShape(20.dp)
+            )
+            .padding(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        SideSwitchButton(
+            modifier = Modifier.weight(1f),
+            text = "Front",
+            selected = selectedSide == 0,
+            onClick = onFrontClick
+        )
+        SideSwitchButton(
+            modifier = Modifier.weight(1f),
+            text = "Back",
+            selected = selectedSide == 1,
+            onClick = onBackClick
+        )
+    }
+}
+
+@Composable
+private fun SideSwitchButton(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (selected) {
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.65f)
+    } else {
+        MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+    }
+    val textColor = if (selected) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.82f)
+    }
+
+    Row(
+        modifier = modifier
+            .border(
+                width = 1.dp,
+                color = borderColor,
+                shape = RoundedCornerShape(16.dp)
+            )
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleMedium,
+            color = textColor,
+            fontWeight = FontWeight.Medium
         )
     }
 }
@@ -345,7 +411,13 @@ private fun ImageSection(
                 contentDescription = title,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 180.dp, max = 280.dp),
+                    .heightIn(min = 180.dp, max = 280.dp)
+                    .border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .padding(8.dp),
                 contentScale = ContentScale.Fit
             )
         }
@@ -353,13 +425,16 @@ private fun ImageSection(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Button(onClick = onPickImageClick) {
-                Text("Choose from gallery")
-            }
+            BorderActionButton(
+                text = "Choose from gallery",
+                onClick = onPickImageClick
+            )
             if (value != null) {
-                TextButton(onClick = onRemoveImageClick) {
-                    Text("Remove")
-                }
+                BorderActionButton(
+                    text = "Remove",
+                    onClick = onRemoveImageClick,
+                    accentColor = MaterialTheme.colorScheme.error
+                )
             }
         }
     }
@@ -399,18 +474,50 @@ private fun AudioSection(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Button(onClick = onPickAudioClick) {
-                Text("Choose file")
-            }
-            Button(onClick = if (isRecording) onStopAudioRecordingClick else onRecordAudioClick) {
-                Text(if (isRecording) "Stop recording" else "Record")
-            }
+            BorderActionButton(
+                text = "Choose file",
+                onClick = onPickAudioClick
+            )
+            BorderActionButton(
+                text = if (isRecording) "Stop recording" else "Record",
+                onClick = if (isRecording) onStopAudioRecordingClick else onRecordAudioClick,
+                accentColor = if (isRecording) MaterialTheme.colorScheme.error else null
+            )
             if (value != null) {
-                TextButton(onClick = onRemoveAudioClick) {
-                    Text("Remove")
-                }
+                BorderActionButton(
+                    text = "Remove",
+                    onClick = onRemoveAudioClick,
+                    accentColor = MaterialTheme.colorScheme.error
+                )
             }
         }
+    }
+}
+
+@Composable
+private fun BorderActionButton(
+    text: String,
+    onClick: () -> Unit,
+    accentColor: Color? = null
+) {
+    val resolvedColor = accentColor ?: MaterialTheme.colorScheme.onBackground
+
+    Button(
+        onClick = onClick,
+        shape = RoundedCornerShape(18.dp),
+        border = BorderStroke(1.dp, resolvedColor.copy(alpha = if (accentColor == null) 0.25f else 0.45f)),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.Transparent,
+            contentColor = resolvedColor,
+            disabledContainerColor = Color.Transparent,
+            disabledContentColor = resolvedColor.copy(alpha = 0.5f)
+        )
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium
+        )
     }
 }
 
@@ -446,7 +553,8 @@ private fun MediaPreview(audioSource: Any) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onBackground
         )
-        Button(
+        BorderActionButton(
+            text = if (isPlaying) "Stop" else "Play",
             onClick = {
                 if (isPlaying) {
                     mediaPlayer.pause()
@@ -476,9 +584,7 @@ private fun MediaPreview(audioSource: Any) {
                     }
                 }
             }
-        ) {
-            Text(if (isPlaying) "Stop" else "Play")
-        }
+        )
     }
 }
 

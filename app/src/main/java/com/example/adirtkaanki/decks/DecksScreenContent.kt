@@ -211,8 +211,23 @@ fun DecksScreenContent(
 
     if (showCreateDeckDialog) {
         AlertDialog(
+            modifier = Modifier.border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f),
+                shape = RoundedCornerShape(24.dp)
+            ),
             onDismissRequest = onDismissCreateDeckDialog,
-            title = { Text("Create deck") },
+            shape = RoundedCornerShape(24.dp),
+            containerColor = MaterialTheme.colorScheme.background,
+            tonalElevation = 0.dp,
+            title = {
+                Text(
+                    text = "Create deck",
+                    color = MaterialTheme.colorScheme.onBackground,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            },
             text = {
                 OutlinedTextField(
                     value = deckName,
@@ -223,28 +238,41 @@ fun DecksScreenContent(
                 )
             },
             confirmButton = {
-                TextButton(
-                    onClick = onConfirmCreateDeck,
-                    enabled = !uiState.isCreating && deckName.trim().isNotEmpty()
-                ) {
-                    Text(if (uiState.isCreating) "Creating..." else "Create")
-                }
+                DialogActionButton(
+                    text = if (uiState.isCreating) "Creating..." else "Create",
+                    enabled = !uiState.isCreating && deckName.trim().isNotEmpty(),
+                    onClick = onConfirmCreateDeck
+                )
             },
             dismissButton = {
-                TextButton(
-                    onClick = onDismissCreateDeckDialog,
-                    enabled = !uiState.isCreating
-                ) {
-                    Text("Cancel")
-                }
+                DialogActionButton(
+                    text = "Cancel",
+                    enabled = !uiState.isCreating,
+                    onClick = onDismissCreateDeckDialog
+                )
             }
         )
     }
 
     if (showRenameDeckDialog) {
         AlertDialog(
+            modifier = Modifier.border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f),
+                shape = RoundedCornerShape(24.dp)
+            ),
             onDismissRequest = onDismissRenameDeckDialog,
-            title = { Text("Rename deck") },
+            shape = RoundedCornerShape(24.dp),
+            containerColor = MaterialTheme.colorScheme.background,
+            tonalElevation = 0.dp,
+            title = {
+                Text(
+                    text = "Rename deck",
+                    color = MaterialTheme.colorScheme.onBackground,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            },
             text = {
                 OutlinedTextField(
                     value = deckName,
@@ -255,20 +283,18 @@ fun DecksScreenContent(
                 )
             },
             confirmButton = {
-                TextButton(
-                    onClick = onConfirmRenameDeck,
-                    enabled = !uiState.isRenaming && deckName.trim().isNotEmpty()
-                ) {
-                    Text(if (uiState.isRenaming) "Saving..." else "Save")
-                }
+                DialogActionButton(
+                    text = if (uiState.isRenaming) "Saving..." else "Save",
+                    enabled = !uiState.isRenaming && deckName.trim().isNotEmpty(),
+                    onClick = onConfirmRenameDeck
+                )
             },
             dismissButton = {
-                TextButton(
-                    onClick = onDismissRenameDeckDialog,
-                    enabled = !uiState.isRenaming
-                ) {
-                    Text("Cancel")
-                }
+                DialogActionButton(
+                    text = "Cancel",
+                    enabled = !uiState.isRenaming,
+                    onClick = onDismissRenameDeckDialog
+                )
             }
         )
     }
@@ -341,3 +367,33 @@ private fun dropdownMenuItemColors() = MenuDefaults.itemColors(
     disabledLeadingIconColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.38f),
     disabledTrailingIconColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.38f)
 )
+
+
+@Composable
+private fun DialogActionButton(
+    text: String,
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        enabled = enabled,
+        shape = RoundedCornerShape(18.dp),
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)
+        ),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.Transparent,
+            disabledContainerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.onBackground,
+            disabledContentColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+        )
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}

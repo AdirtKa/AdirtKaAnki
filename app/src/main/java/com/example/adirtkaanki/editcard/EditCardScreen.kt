@@ -1,46 +1,43 @@
-package com.example.adirtkaanki.createcard
+package com.example.adirtkaanki.editcard
 
 import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.content.res.Configuration
 import android.net.Uri
 import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.adirtkaanki.createcard.CreateCardScreenContent
+import com.example.adirtkaanki.createcard.RecordingTarget
+import com.example.adirtkaanki.createcard.WavAudioRecorder
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import androidx.lifecycle.viewmodel.compose.viewModel
 import java.util.UUID
 
 @Composable
-fun CreateCardScreen(
-    deckId: String,
+fun EditCardScreen(
+    cardId: String,
     onBackClick: () -> Unit,
-    onCardCreated: () -> Unit
+    onCardUpdated: () -> Unit
 ) {
     val context = LocalContext.current
     val appContext = context.applicationContext
-    val viewModel: CreateCardViewModel = viewModel(
-        factory = CreateCardViewModelFactory(
-            context = context,
-            deckId = deckId
-        )
+    val viewModel: EditCardViewModel = viewModel(
+        factory = EditCardViewModelFactory(context = context, cardId = cardId)
     )
 
     val recorder = remember { WavAudioRecorder(appContext) }
-
     var frontImageUri by remember { mutableStateOf<Uri?>(null) }
     var backImageUri by remember { mutableStateOf<Uri?>(null) }
     var frontAudioUri by remember { mutableStateOf<Uri?>(null) }
@@ -50,9 +47,8 @@ fun CreateCardScreen(
     fun stopRecording() {
         val target = viewModel.uiState.activeRecordingTarget ?: return
         val file = recorder.stop()
-        val uri = file?.let { fileToUri(appContext, it) }
+        val uri = file?.let { FileProvider.getUriForFile(appContext, "${appContext.packageName}.fileprovider", it) }
         val name = file?.name
-
         when (target) {
             RecordingTarget.FRONT_AUDIO -> {
                 frontAudioUri = uri
@@ -63,15 +59,11 @@ fun CreateCardScreen(
                 viewModel.onBackAudioSelected(name)
             }
         }
-
         viewModel.onRecordingStateChanged(null)
     }
 
     fun startRecording(target: RecordingTarget) {
-        if (viewModel.uiState.activeRecordingTarget != null) {
-            stopRecording()
-        }
-
+        if (viewModel.uiState.activeRecordingTarget != null) stopRecording()
         try {
             recorder.start("${target.name.lowercase()}-${UUID.randomUUID()}.wav")
             viewModel.onRecordingStateChanged(target)
@@ -80,40 +72,32 @@ fun CreateCardScreen(
         }
     }
 
-    val frontPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+    val frontImagePicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         frontImageUri = uri
         viewModel.onFrontImageSelected(uri?.let { queryDisplayName(context, it) })
     }
-    val backPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+    val backImagePicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         backImageUri = uri
         viewModel.onBackImageSelected(uri?.let { queryDisplayName(context, it) })
     }
     val frontAudioPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null && !isWaveFile(context, uri)) {
-            Toast.makeText(context, "Please choose a .wav file", Toast.LENGTH_SHORT).show()
-            return@rememberLauncherForActivityResult
+        if (uri != null) {
+            persistReadPermission(context, uri)
+            frontAudioUri = uri
+            viewModel.onFrontAudioSelected(queryDisplayName(context, uri))
         }
-        if (uri != null) persistReadPermission(context, uri)
-        frontAudioUri = uri
-        viewModel.onFrontAudioSelected(uri?.let { queryDisplayName(context, it) })
     }
     val backAudioPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null && !isWaveFile(context, uri)) {
-            Toast.makeText(context, "Please choose a .wav file", Toast.LENGTH_SHORT).show()
-            return@rememberLauncherForActivityResult
+        if (uri != null) {
+            persistReadPermission(context, uri)
+            backAudioUri = uri
+            viewModel.onBackAudioSelected(queryDisplayName(context, uri))
         }
-        if (uri != null) persistReadPermission(context, uri)
-        backAudioUri = uri
-        viewModel.onBackAudioSelected(uri?.let { queryDisplayName(context, it) })
     }
-    val recordAudioPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+    val recordPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         val target = pendingRecordingTarget
         pendingRecordingTarget = null
-        if (granted && target != null) {
-            startRecording(target)
-        } else if (!granted) {
-            Toast.makeText(context, "Microphone permission is required to record audio", Toast.LENGTH_SHORT).show()
-        }
+        if (granted && target != null) startRecording(target)
     }
 
     DisposableEffect(Unit) {
@@ -124,63 +108,65 @@ fun CreateCardScreen(
     }
 
     CreateCardScreenContent(
-        uiState = viewModel.uiState,
-        frontImagePreview = frontImageUri,
-        backImagePreview = backImageUri,
-        frontAudioPreview = frontAudioUri,
-        backAudioPreview = backAudioUri,
+        uiState = com.example.adirtkaanki.createcard.CreateCardUiState(
+            frontMainText = viewModel.uiState.frontMainText,
+            frontSubText = viewModel.uiState.frontSubText,
+            backMainText = viewModel.uiState.backMainText,
+            backSubText = viewModel.uiState.backSubText,
+            isSaving = viewModel.uiState.isSaving,
+            errorMessage = viewModel.uiState.errorMessage,
+            frontImageName = viewModel.uiState.frontImageName,
+            backImageName = viewModel.uiState.backImageName,
+            frontAudioName = viewModel.uiState.frontAudioName,
+            backAudioName = viewModel.uiState.backAudioName,
+            activeRecordingTarget = viewModel.uiState.activeRecordingTarget
+        ),
+        frontImagePreview = frontImageUri ?: viewModel.uiState.frontImageUrl,
+        backImagePreview = backImageUri ?: viewModel.uiState.backImageUrl,
+        frontAudioPreview = frontAudioUri ?: viewModel.uiState.frontAudioUrl,
+        backAudioPreview = backAudioUri ?: viewModel.uiState.backAudioUrl,
         onBackClick = onBackClick,
         onFrontMainTextChange = viewModel::onFrontMainTextChange,
         onFrontSubTextChange = viewModel::onFrontSubTextChange,
         onBackMainTextChange = viewModel::onBackMainTextChange,
         onBackSubTextChange = viewModel::onBackSubTextChange,
-        onPickFrontImageClick = {
-            frontPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-        },
+        onPickFrontImageClick = { frontImagePicker.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
         onRemoveFrontImageClick = {
             frontImageUri = null
-            viewModel.onFrontImageSelected(null)
+            viewModel.clearFrontImage()
         },
-        onPickBackImageClick = {
-            backPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-        },
+        onPickBackImageClick = { backImagePicker.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
         onRemoveBackImageClick = {
             backImageUri = null
-            viewModel.onBackImageSelected(null)
+            viewModel.clearBackImage()
         },
-        onPickFrontAudioClick = {
-            frontAudioPicker.launch(arrayOf("audio/wav", "audio/x-wav", "audio/*"))
-        },
+        onPickFrontAudioClick = { frontAudioPicker.launch(arrayOf("audio/wav", "audio/x-wav", "audio/*")) },
         onRecordFrontAudioClick = {
             if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
                 startRecording(RecordingTarget.FRONT_AUDIO)
             } else {
                 pendingRecordingTarget = RecordingTarget.FRONT_AUDIO
-                recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                recordPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
             }
         },
         onStopFrontAudioRecordingClick = ::stopRecording,
         onRemoveFrontAudioClick = {
-            if (viewModel.uiState.activeRecordingTarget == RecordingTarget.FRONT_AUDIO) stopRecording()
             frontAudioUri = null
-            viewModel.onFrontAudioSelected(null)
+            viewModel.clearFrontAudio()
         },
-        onPickBackAudioClick = {
-            backAudioPicker.launch(arrayOf("audio/wav", "audio/x-wav", "audio/*"))
-        },
+        onPickBackAudioClick = { backAudioPicker.launch(arrayOf("audio/wav", "audio/x-wav", "audio/*")) },
         onRecordBackAudioClick = {
             if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
                 startRecording(RecordingTarget.BACK_AUDIO)
             } else {
                 pendingRecordingTarget = RecordingTarget.BACK_AUDIO
-                recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                recordPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
             }
         },
         onStopBackAudioRecordingClick = ::stopRecording,
         onRemoveBackAudioClick = {
-            if (viewModel.uiState.activeRecordingTarget == RecordingTarget.BACK_AUDIO) stopRecording()
             backAudioUri = null
-            viewModel.onBackAudioSelected(null)
+            viewModel.clearBackAudio()
         },
         onSaveClick = {
             if (viewModel.uiState.activeRecordingTarget != null) stopRecording()
@@ -190,29 +176,20 @@ fun CreateCardScreen(
                 backImageUri = backImageUri,
                 frontAudioUri = frontAudioUri,
                 backAudioUri = backAudioUri,
-                onSuccess = onCardCreated
+                onSuccess = onCardUpdated
             )
-        }
+        },
+        screenTitle = "Edit card",
+        helperText = "Update the card content and media, then save your changes.",
+        saveButtonText = "Save changes"
     )
 }
 
 private fun persistReadPermission(context: Context, uri: Uri) {
     try {
         context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    } catch (_: SecurityException) {
-    } catch (_: UnsupportedOperationException) {
+    } catch (_: Exception) {
     }
-}
-
-private fun isWaveFile(context: Context, uri: Uri): Boolean {
-    val mimeType = context.contentResolver.getType(uri)?.lowercase()
-    if (mimeType == "audio/wav" || mimeType == "audio/x-wav" || mimeType == "audio/wave") return true
-    val displayName = queryDisplayName(context, uri)?.lowercase()
-    return displayName?.endsWith(".wav") == true
-}
-
-private fun fileToUri(context: Context, file: java.io.File): Uri {
-    return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
 }
 
 private fun queryDisplayName(context: Context, uri: Uri): String? {
@@ -223,43 +200,4 @@ private fun queryDisplayName(context: Context, uri: Uri): String? {
             if (columnIndex >= 0 && cursor.moveToFirst()) return cursor.getString(columnIndex)
         }
     return uri.lastPathSegment
-}
-
-@Preview(showBackground = true, showSystemUi = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
-@Composable
-private fun CreateCardScreenPreview() {
-    CreateCardScreenContent(
-        uiState = CreateCardUiState(
-            frontMainText = "apple",
-            frontSubText = "noun",
-            backMainText = "yabloko",
-            backSubText = "fruit",
-            frontImageName = "front.png",
-            backImageName = "back.png",
-            frontAudioName = "front.wav",
-            backAudioName = "back.wav"
-        ),
-        frontImagePreview = null,
-        backImagePreview = null,
-        frontAudioPreview = null,
-        backAudioPreview = null,
-        onBackClick = {},
-        onFrontMainTextChange = {},
-        onFrontSubTextChange = {},
-        onBackMainTextChange = {},
-        onBackSubTextChange = {},
-        onPickFrontImageClick = {},
-        onRemoveFrontImageClick = {},
-        onPickBackImageClick = {},
-        onRemoveBackImageClick = {},
-        onPickFrontAudioClick = {},
-        onRecordFrontAudioClick = {},
-        onStopFrontAudioRecordingClick = {},
-        onRemoveFrontAudioClick = {},
-        onPickBackAudioClick = {},
-        onRecordBackAudioClick = {},
-        onStopBackAudioRecordingClick = {},
-        onRemoveBackAudioClick = {},
-        onSaveClick = {}
-    )
 }

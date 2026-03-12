@@ -6,10 +6,13 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.adirtkaanki.data.model.Deck
+import com.example.adirtkaanki.data.model.DeckCardStats
 import com.example.adirtkaanki.data.remote.ApiFactory
 import com.example.adirtkaanki.data.repository.AuthRepository
 import com.example.adirtkaanki.data.repository.DecksRepository
 import com.example.adirtkaanki.data.session.SessionManager
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 
 class DecksViewModel(
@@ -69,10 +72,12 @@ class DecksViewModel(
             val result = decksRepository.getDecks()
 
             uiState = if (result.isSuccess) {
+                val decks = result.getOrDefault(emptyList())
                 uiState.copy(
                     isLoading = false,
                     isRefreshing = false,
-                    decks = result.getOrDefault(emptyList())
+                    decks = decks,
+                    deckStats = loadDeckStats(decks)
                 )
             } else {
                 uiState.copy(
@@ -100,10 +105,14 @@ class DecksViewModel(
 
             uiState = if (result.isSuccess) {
                 val createdDeck = result.getOrNull()
-
                 uiState.copy(
                     isCreating = false,
-                    decks = if (createdDeck != null) uiState.decks + createdDeck else uiState.decks
+                    decks = if (createdDeck != null) uiState.decks + createdDeck else uiState.decks,
+                    deckStats = if (createdDeck != null) {
+                        uiState.deckStats + (createdDeck.id to DeckCardStats(0, 0, 0))
+                    } else {
+                        uiState.deckStats
+                    }
                 )
             } else {
                 uiState.copy(
@@ -154,6 +163,7 @@ class DecksViewModel(
             if (result.isSuccess) {
                 uiState = uiState.copy(
                     decks = uiState.decks.filter { it.id != deck.id },
+                    deckStats = uiState.deckStats - deck.id,
                     errorMessage = null
                 )
             } else {
@@ -170,5 +180,13 @@ class DecksViewModel(
 
     fun onLogoutNavigated() {
         logoutSuccess = false
+    }
+
+    private suspend fun loadDeckStats(decks: List<Deck>): Map<String, DeckCardStats> {
+        return decks.map { deck ->
+            viewModelScope.async {
+                deck.id to decksRepository.getDeckStats(deck.id).getOrDefault(DeckCardStats(0, 0, 0))
+            }
+        }.awaitAll().toMap()
     }
 }

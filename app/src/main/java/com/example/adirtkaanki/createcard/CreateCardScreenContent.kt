@@ -2,6 +2,8 @@ package com.example.adirtkaanki.createcard
 
 import android.media.AudioAttributes
 import android.media.MediaPlayer
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
@@ -39,17 +41,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import android.net.Uri
-import android.widget.Toast
+import com.example.adirtkaanki.data.remote.ApiConfig
 import com.example.adirtkaanki.ui.components.LoadingButton
 
 @Composable
 fun CreateCardScreenContent(
     uiState: CreateCardUiState,
-    frontImageUri: Uri?,
-    backImageUri: Uri?,
-    frontAudioUri: Uri?,
-    backAudioUri: Uri?,
+    frontImagePreview: Any?,
+    backImagePreview: Any?,
+    frontAudioPreview: Any?,
+    backAudioPreview: Any?,
     onBackClick: () -> Unit,
     onFrontMainTextChange: (String) -> Unit,
     onFrontSubTextChange: (String) -> Unit,
@@ -67,7 +68,10 @@ fun CreateCardScreenContent(
     onRecordBackAudioClick: () -> Unit,
     onStopBackAudioRecordingClick: () -> Unit,
     onRemoveBackAudioClick: () -> Unit,
-    onSaveClick: () -> Unit
+    onSaveClick: () -> Unit,
+    screenTitle: String = "Create card",
+    helperText: String = "Build each side separately, then save the full card.",
+    saveButtonText: String = "Create card"
 ) {
     var selectedSide by rememberSaveable { mutableIntStateOf(0) }
 
@@ -98,14 +102,14 @@ fun CreateCardScreenContent(
         }
 
         Text(
-            text = "Create card",
+            text = screenTitle,
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onBackground,
             fontWeight = FontWeight.Bold
         )
 
         Text(
-            text = "Build each side separately, then save the full card.",
+            text = helperText,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.75f)
         )
@@ -144,12 +148,12 @@ fun CreateCardScreenContent(
                     onSubTextChange = onFrontSubTextChange,
                     imageTitle = "Image",
                     imageName = uiState.frontImageName,
-                    imageUri = frontImageUri,
+                    imagePreview = frontImagePreview,
                     onPickImageClick = onPickFrontImageClick,
                     onRemoveImageClick = onRemoveFrontImageClick,
                     audioTitle = "Audio (.wav)",
                     audioName = uiState.frontAudioName,
-                    audioUri = frontAudioUri,
+                    audioPreview = frontAudioPreview,
                     isRecording = uiState.activeRecordingTarget == RecordingTarget.FRONT_AUDIO,
                     onPickAudioClick = onPickFrontAudioClick,
                     onRecordAudioClick = onRecordFrontAudioClick,
@@ -167,12 +171,12 @@ fun CreateCardScreenContent(
                     onSubTextChange = onBackSubTextChange,
                     imageTitle = "Image",
                     imageName = uiState.backImageName,
-                    imageUri = backImageUri,
+                    imagePreview = backImagePreview,
                     onPickImageClick = onPickBackImageClick,
                     onRemoveImageClick = onRemoveBackImageClick,
                     audioTitle = "Audio (.wav)",
                     audioName = uiState.backAudioName,
-                    audioUri = backAudioUri,
+                    audioPreview = backAudioPreview,
                     isRecording = uiState.activeRecordingTarget == RecordingTarget.BACK_AUDIO,
                     onPickAudioClick = onPickBackAudioClick,
                     onRecordAudioClick = onRecordBackAudioClick,
@@ -184,7 +188,7 @@ fun CreateCardScreenContent(
 
         LoadingButton(
             modifier = Modifier.fillMaxWidth(),
-            text = "Create card",
+            text = saveButtonText,
             isLoading = uiState.isSaving,
             onClick = onSaveClick
         )
@@ -219,12 +223,12 @@ private fun SideEditor(
     onSubTextChange: (String) -> Unit,
     imageTitle: String,
     imageName: String?,
-    imageUri: Uri?,
+    imagePreview: Any?,
     onPickImageClick: () -> Unit,
     onRemoveImageClick: () -> Unit,
     audioTitle: String,
     audioName: String?,
-    audioUri: Uri?,
+    audioPreview: Any?,
     isRecording: Boolean,
     onPickAudioClick: () -> Unit,
     onRecordAudioClick: () -> Unit,
@@ -273,7 +277,7 @@ private fun SideEditor(
         ImageSection(
             title = imageTitle,
             value = imageName,
-            imageUri = imageUri,
+            imagePreview = imagePreview,
             onPickImageClick = onPickImageClick,
             onRemoveImageClick = onRemoveImageClick
         )
@@ -281,7 +285,7 @@ private fun SideEditor(
         AudioSection(
             title = audioTitle,
             value = audioName,
-            audioUri = audioUri,
+            audioPreview = audioPreview,
             isRecording = isRecording,
             onPickAudioClick = onPickAudioClick,
             onRecordAudioClick = onRecordAudioClick,
@@ -315,7 +319,7 @@ private fun EditorRow(
 private fun ImageSection(
     title: String,
     value: String?,
-    imageUri: Uri?,
+    imagePreview: Any?,
     onPickImageClick: () -> Unit,
     onRemoveImageClick: () -> Unit
 ) {
@@ -335,9 +339,9 @@ private fun ImageSection(
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.75f),
             style = MaterialTheme.typography.bodyMedium
         )
-        imageUri?.let {
+        imagePreview?.let {
             AsyncImage(
-                model = it,
+                model = normalizePreviewSource(it),
                 contentDescription = title,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -365,7 +369,7 @@ private fun ImageSection(
 private fun AudioSection(
     title: String,
     value: String?,
-    audioUri: Uri?,
+    audioPreview: Any?,
     isRecording: Boolean,
     onPickAudioClick: () -> Unit,
     onRecordAudioClick: () -> Unit,
@@ -388,8 +392,8 @@ private fun AudioSection(
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.75f),
             style = MaterialTheme.typography.bodyMedium
         )
-        audioUri?.let {
-            LocalAudioPreview(audioUri = it)
+        audioPreview?.let {
+            MediaPreview(audioSource = it)
         }
         Row(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
@@ -411,10 +415,10 @@ private fun AudioSection(
 }
 
 @Composable
-private fun LocalAudioPreview(audioUri: Uri) {
+private fun MediaPreview(audioSource: Any) {
     val context = LocalContext.current
-    var isPlaying by remember(audioUri) { mutableStateOf(false) }
-    val mediaPlayer = remember(audioUri) {
+    var isPlaying by remember(audioSource) { mutableStateOf(false) }
+    val mediaPlayer = remember(audioSource) {
         MediaPlayer().apply {
             setAudioAttributes(
                 AudioAttributes.Builder()
@@ -457,7 +461,11 @@ private fun LocalAudioPreview(audioUri: Uri) {
                                 .setUsage(AudioAttributes.USAGE_MEDIA)
                                 .build()
                         )
-                        mediaPlayer.setDataSource(context, audioUri)
+                        when (val normalized = normalizePreviewSource(audioSource)) {
+                            is Uri -> mediaPlayer.setDataSource(context, normalized)
+                            is String -> mediaPlayer.setDataSource(normalized)
+                            else -> throw IllegalArgumentException("Unsupported audio source")
+                        }
                         mediaPlayer.setOnCompletionListener { isPlaying = false }
                         mediaPlayer.prepare()
                         mediaPlayer.start()
@@ -471,5 +479,18 @@ private fun LocalAudioPreview(audioUri: Uri) {
         ) {
             Text(if (isPlaying) "Stop" else "Play")
         }
+    }
+}
+
+private fun normalizePreviewSource(source: Any): Any {
+    return when (source) {
+        is String -> {
+            if (source.startsWith("http://") || source.startsWith("https://")) {
+                source
+            } else {
+                ApiConfig.BASE_URL.trimEnd('/') + "/" + source.trimStart('/')
+            }
+        }
+        else -> source
     }
 }

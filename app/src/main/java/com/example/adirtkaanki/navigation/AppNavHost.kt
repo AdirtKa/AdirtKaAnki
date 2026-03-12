@@ -17,6 +17,7 @@ import com.example.adirtkaanki.data.session.SessionState
 import com.example.adirtkaanki.data.session.SessionViewModel
 import com.example.adirtkaanki.deckcards.DeckCardsScreen
 import com.example.adirtkaanki.decks.DecksScreen
+import com.example.adirtkaanki.editcard.EditCardScreen
 import com.example.adirtkaanki.login.LoginScreen
 import com.example.adirtkaanki.register.RegisterScreen
 import com.example.adirtkaanki.splash.SplashScreen
@@ -31,7 +32,6 @@ fun AppNavHost(
     LaunchedEffect(sessionState) {
         when (sessionState) {
             SessionState.Loading -> Unit
-
             SessionState.LoggedIn -> {
                 val currentRoute = navController.currentBackStackEntry?.destination?.route
                 if (currentRoute != Routes.DECKS) {
@@ -41,7 +41,6 @@ fun AppNavHost(
                     }
                 }
             }
-
             SessionState.LoggedOut -> {
                 val currentRoute = navController.currentBackStackEntry?.destination?.route
                 if (currentRoute != Routes.LOGIN) {
@@ -54,60 +53,21 @@ fun AppNavHost(
         }
     }
 
-    NavHost(
-        navController = navController,
-        startDestination = Routes.SPLASH
-    ) {
-        composable(
-            Routes.SPLASH,
-            enterTransition = { EnterTransition.None },
-            exitTransition = { ExitTransition.None },
-            popEnterTransition = { EnterTransition.None },
-            popExitTransition = { ExitTransition.None }
-        ) {
+    NavHost(navController = navController, startDestination = Routes.SPLASH) {
+        composable(Routes.SPLASH, enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }, popEnterTransition = { EnterTransition.None }, popExitTransition = { ExitTransition.None }) {
             SplashScreen(sessionState = sessionState)
         }
 
-        composable(
-            Routes.LOGIN,
-            enterTransition = { EnterTransition.None },
-            exitTransition = { ExitTransition.None },
-            popEnterTransition = { EnterTransition.None },
-            popExitTransition = { ExitTransition.None }
-        ) {
-            LoginScreen(
-                onRegisterClick = {
-                    navController.navigate(Routes.REGISTER)
-                },
-            )
+        composable(Routes.LOGIN, enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }, popEnterTransition = { EnterTransition.None }, popExitTransition = { ExitTransition.None }) {
+            LoginScreen(onRegisterClick = { navController.navigate(Routes.REGISTER) })
         }
 
-        composable(
-            Routes.REGISTER,
-            enterTransition = { EnterTransition.None },
-            exitTransition = { ExitTransition.None },
-            popEnterTransition = { EnterTransition.None },
-            popExitTransition = { ExitTransition.None }
-        ) {
-            RegisterScreen(
-                onLoginClick = {
-                    navController.navigate(Routes.LOGIN)
-                },
-            )
+        composable(Routes.REGISTER, enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }, popEnterTransition = { EnterTransition.None }, popExitTransition = { ExitTransition.None }) {
+            RegisterScreen(onLoginClick = { navController.navigate(Routes.LOGIN) })
         }
 
-        composable(
-            Routes.DECKS,
-            enterTransition = { EnterTransition.None },
-            exitTransition = { ExitTransition.None },
-            popEnterTransition = { EnterTransition.None },
-            popExitTransition = { ExitTransition.None }
-        ) {
-            DecksScreen(
-                onShowCardsClick = { deck: Deck ->
-                    navController.navigate(Routes.deckCards(deck.id, deck.name))
-                }
-            )
+        composable(Routes.DECKS, enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }, popEnterTransition = { EnterTransition.None }, popExitTransition = { ExitTransition.None }) {
+            DecksScreen(onShowCardsClick = { deck: Deck -> navController.navigate(Routes.deckCards(deck.id, deck.name)) })
         }
 
         composable(
@@ -122,9 +82,7 @@ fun AppNavHost(
             popExitTransition = { ExitTransition.None }
         ) { backStackEntry ->
             val deckId = backStackEntry.arguments?.getString(Routes.DECK_CARDS_ID_ARG).orEmpty()
-            val deckName = Uri.decode(
-                backStackEntry.arguments?.getString(Routes.DECK_CARDS_NAME_ARG).orEmpty()
-            )
+            val deckName = Uri.decode(backStackEntry.arguments?.getString(Routes.DECK_CARDS_NAME_ARG).orEmpty())
             val refreshSignal = backStackEntry.savedStateHandle.getStateFlow("cards_changed", false)
 
             DeckCardsScreen(
@@ -150,7 +108,6 @@ fun AppNavHost(
             popExitTransition = { ExitTransition.None }
         ) { backStackEntry ->
             val deckId = backStackEntry.arguments?.getString(Routes.CREATE_CARD_ID_ARG).orEmpty()
-
             CreateCardScreen(
                 deckId = deckId,
                 onBackClick = { navController.popBackStack() },
@@ -163,19 +120,45 @@ fun AppNavHost(
 
         composable(
             route = Routes.CARD_DETAIL,
-            arguments = listOf(
-                navArgument(Routes.CARD_DETAIL_ID_ARG) { type = NavType.StringType }
-            ),
+            arguments = listOf(navArgument(Routes.CARD_DETAIL_ID_ARG) { type = NavType.StringType }),
             enterTransition = { EnterTransition.None },
             exitTransition = { ExitTransition.None },
             popEnterTransition = { EnterTransition.None },
             popExitTransition = { ExitTransition.None }
         ) { backStackEntry ->
             val cardId = backStackEntry.arguments?.getString(Routes.CARD_DETAIL_ID_ARG).orEmpty()
+            val refreshSignal = backStackEntry.savedStateHandle.getStateFlow("card_updated", false)
 
             CardDetailScreen(
                 cardId = cardId,
-                onBackClick = { navController.popBackStack() }
+                refreshSignal = refreshSignal,
+                onRefreshHandled = { backStackEntry.savedStateHandle["card_updated"] = false },
+                onBackClick = {
+                    if (backStackEntry.savedStateHandle.get<Boolean>("card_updated") == true) {
+                        navController.previousBackStackEntry?.savedStateHandle?.set("cards_changed", true)
+                    }
+                    navController.popBackStack()
+                },
+                onEditClick = { navController.navigate(Routes.editCard(cardId)) }
+            )
+        }
+
+        composable(
+            route = Routes.EDIT_CARD,
+            arguments = listOf(navArgument(Routes.EDIT_CARD_ID_ARG) { type = NavType.StringType }),
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None }
+        ) { backStackEntry ->
+            val cardId = backStackEntry.arguments?.getString(Routes.EDIT_CARD_ID_ARG).orEmpty()
+            EditCardScreen(
+                cardId = cardId,
+                onBackClick = { navController.popBackStack() },
+                onCardUpdated = {
+                    navController.previousBackStackEntry?.savedStateHandle?.set("card_updated", true)
+                    navController.popBackStack()
+                }
             )
         }
     }

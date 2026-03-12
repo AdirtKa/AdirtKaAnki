@@ -1,6 +1,8 @@
 package com.example.adirtkaanki.data.remote
 
 import com.example.adirtkaanki.data.session.SessionManager
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -9,6 +11,9 @@ import retrofit2.converter.gson.GsonConverterFactory
 object ApiFactory {
 
     private val baseUrl = ApiConfig.BASE_URL
+    private val gson: Gson = GsonBuilder()
+        .serializeNulls()
+        .create()
 
     private fun createLoggingInterceptor(): HttpLoggingInterceptor {
         return HttpLoggingInterceptor().apply {
@@ -26,7 +31,7 @@ object ApiFactory {
         return Retrofit.Builder()
             .baseUrl(baseUrl)
             .client(createRefreshClient())
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }
 
@@ -48,7 +53,7 @@ object ApiFactory {
         return Retrofit.Builder()
             .baseUrl(baseUrl)
             .client(createMainClient(sessionManager))
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }
 

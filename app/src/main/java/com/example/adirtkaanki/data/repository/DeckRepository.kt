@@ -2,6 +2,7 @@ package com.example.adirtkaanki.data.repository
 
 import com.example.adirtkaanki.data.mappers.toDomain
 import com.example.adirtkaanki.data.model.Deck
+import com.example.adirtkaanki.data.model.DeckCardStats
 import com.example.adirtkaanki.data.remote.DecksApiService
 import com.example.adirtkaanki.data.remote.dto.CreateDeckRequest
 import com.example.adirtkaanki.data.remote.dto.RenameDeckRequest
@@ -40,6 +41,15 @@ class DecksRepository(
         return try {
             api.deleteDeck(deckId)
             Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getDeckStats(deckId: String): Result<DeckCardStats> {
+        return try {
+            val response = api.getDeckStats(deckId)
+            Result.success(response.toDomain())
         } catch (e: Exception) {
             Result.failure(e)
         }

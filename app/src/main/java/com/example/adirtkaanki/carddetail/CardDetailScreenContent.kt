@@ -46,7 +46,8 @@ import kotlin.math.abs
 @Composable
 fun CardDetailScreenContent(
     uiState: CardDetailUiState,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onEditClick: () -> Unit
 ) {
     var showFront by remember(uiState.card?.id) { mutableStateOf(true) }
     var dragAmount by remember(uiState.card?.id) { mutableFloatStateOf(0f) }
@@ -77,12 +78,23 @@ fun CardDetailScreenContent(
             )
         }
 
-        Text(
-            text = "Card details",
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-            fontWeight = FontWeight.Bold
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Card details",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+                fontWeight = FontWeight.Bold
+            )
+            if (uiState.card != null) {
+                Button(onClick = onEditClick) {
+                    Text("Edit")
+                }
+            }
+        }
 
         when {
             uiState.isLoading -> {
@@ -123,18 +135,12 @@ fun CardDetailScreenContent(
                         .clickable { showFront = !showFront }
                         .pointerInput(uiState.card.id, showFront) {
                             detectHorizontalDragGestures(
-                                onHorizontalDrag = { _, drag ->
-                                    dragAmount += drag
-                                },
+                                onHorizontalDrag = { _, drag -> dragAmount += drag },
                                 onDragEnd = {
-                                    if (abs(dragAmount) > 40f) {
-                                        showFront = !showFront
-                                    }
+                                    if (abs(dragAmount) > 40f) showFront = !showFront
                                     dragAmount = 0f
                                 },
-                                onDragCancel = {
-                                    dragAmount = 0f
-                                }
+                                onDragCancel = { dragAmount = 0f }
                             )
                         }
                         .padding(18.dp)
@@ -187,17 +193,10 @@ private fun CardSideContent(
             fontWeight = FontWeight.Bold
         )
 
-        DetailRow(
-            label = "Main text",
-            value = mainText,
-            emphasized = true
-        )
+        DetailRow(label = "Main text", value = mainText, emphasized = true)
 
         subText?.takeIf { it.isNotBlank() }?.let {
-            DetailRow(
-                label = "Sub text",
-                value = it
-            )
+            DetailRow(label = "Sub text", value = it)
         }
 
         imageUrl?.let {
@@ -238,11 +237,7 @@ private fun CardSideContent(
 }
 
 @Composable
-private fun DetailRow(
-    label: String,
-    value: String,
-    emphasized: Boolean = false
-) {
+private fun DetailRow(label: String, value: String, emphasized: Boolean = false) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -288,9 +283,7 @@ private fun AudioPlayer(url: String) {
     }
 
     DisposableEffect(mediaPlayer) {
-        onDispose {
-            mediaPlayer.release()
-        }
+        onDispose { mediaPlayer.release() }
     }
 
     Button(
@@ -325,9 +318,6 @@ private fun AudioPlayer(url: String) {
 }
 
 private fun toAbsoluteMediaUrl(url: String): String {
-    return if (url.startsWith("http://") || url.startsWith("https://")) {
-        url
-    } else {
-        ApiConfig.BASE_URL.trimEnd('/') + "/" + url.trimStart('/')
-    }
+    return if (url.startsWith("http://") || url.startsWith("https://")) url
+    else ApiConfig.BASE_URL.trimEnd('/') + "/" + url.trimStart('/')
 }

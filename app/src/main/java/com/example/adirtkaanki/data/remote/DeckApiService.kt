@@ -1,6 +1,7 @@
 package com.example.adirtkaanki.data.remote
 
 import com.example.adirtkaanki.data.remote.dto.CreateDeckRequest
+import com.example.adirtkaanki.data.remote.dto.DeckCardStatsDto
 import com.example.adirtkaanki.data.remote.dto.DeckDto
 import com.example.adirtkaanki.data.remote.dto.RenameDeckRequest
 import retrofit2.http.Body
@@ -30,4 +31,9 @@ interface DecksApiService {
     suspend fun deleteDeck(
         @Path("id") id: String
     )
+
+    @GET("decks/{id}/stats")
+    suspend fun getDeckStats(
+        @Path("id") id: String
+    ): DeckCardStatsDto
 }

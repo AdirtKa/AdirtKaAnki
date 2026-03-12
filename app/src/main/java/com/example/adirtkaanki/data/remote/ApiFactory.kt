@@ -59,4 +59,12 @@ object ApiFactory {
     fun createDecksApiService(sessionManager: SessionManager): DecksApiService {
         return createMainRetrofit(sessionManager).create(DecksApiService::class.java)
     }
+
+    fun createCardsApiService(sessionManager: SessionManager): CardsApiService {
+        return createMainRetrofit(sessionManager).create(CardsApiService::class.java)
+    }
+
+    fun createMediaApiService(sessionManager: SessionManager): MediaApiService {
+        return createMainRetrofit(sessionManager).create(MediaApiService::class.java)
+    }
 }

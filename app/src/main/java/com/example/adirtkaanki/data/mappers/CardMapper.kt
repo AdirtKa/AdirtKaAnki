@@ -4,12 +4,22 @@ import com.example.adirtkaanki.data.model.DeckCard
 import com.example.adirtkaanki.data.remote.dto.CardDto
 
 fun CardDto.toDomain(): DeckCard {
-    val resolvedFront = front ?: question ?: term ?: ""
-    val resolvedBack = back ?: answer ?: definition ?: ""
-
     return DeckCard(
         id = id,
-        front = resolvedFront,
-        back = resolvedBack
+        deckId = deckId,
+        frontMainText = frontMainText,
+        frontSubText = frontSubText,
+        backMainText = backMainText,
+        backSubText = backSubText,
+        frontImageId = frontImageId,
+        frontAudioId = frontAudioId,
+        backImageId = backImageId,
+        backAudioId = backAudioId,
+        frontImageUrl = frontImageUrl,
+        frontAudioUrl = frontAudioUrl,
+        backImageUrl = backImageUrl,
+        backAudioUrl = backAudioUrl,
+        createdAt = createdAt,
+        updatedAt = updatedAt
     )
 }

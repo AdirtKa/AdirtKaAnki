@@ -10,6 +10,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.adirtkaanki.carddetail.CardDetailScreen
+import com.example.adirtkaanki.createcard.CreateCardScreen
 import com.example.adirtkaanki.data.model.Deck
 import com.example.adirtkaanki.data.session.SessionState
 import com.example.adirtkaanki.data.session.SessionViewModel
@@ -123,10 +125,56 @@ fun AppNavHost(
             val deckName = Uri.decode(
                 backStackEntry.arguments?.getString(Routes.DECK_CARDS_NAME_ARG).orEmpty()
             )
+            val refreshSignal = backStackEntry.savedStateHandle.getStateFlow("cards_changed", false)
 
             DeckCardsScreen(
                 deckId = deckId,
                 deckName = deckName,
+                refreshSignal = refreshSignal,
+                onRefreshHandled = { backStackEntry.savedStateHandle["cards_changed"] = false },
+                onBackClick = { navController.popBackStack() },
+                onCreateCardClick = { navController.navigate(Routes.createCard(deckId, deckName)) },
+                onCardClick = { cardId -> navController.navigate(Routes.cardDetail(cardId)) }
+            )
+        }
+
+        composable(
+            route = Routes.CREATE_CARD,
+            arguments = listOf(
+                navArgument(Routes.CREATE_CARD_ID_ARG) { type = NavType.StringType },
+                navArgument(Routes.CREATE_CARD_NAME_ARG) { type = NavType.StringType }
+            ),
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None }
+        ) { backStackEntry ->
+            val deckId = backStackEntry.arguments?.getString(Routes.CREATE_CARD_ID_ARG).orEmpty()
+
+            CreateCardScreen(
+                deckId = deckId,
+                onBackClick = { navController.popBackStack() },
+                onCardCreated = {
+                    navController.previousBackStackEntry?.savedStateHandle?.set("cards_changed", true)
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(
+            route = Routes.CARD_DETAIL,
+            arguments = listOf(
+                navArgument(Routes.CARD_DETAIL_ID_ARG) { type = NavType.StringType }
+            ),
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None }
+        ) { backStackEntry ->
+            val cardId = backStackEntry.arguments?.getString(Routes.CARD_DETAIL_ID_ARG).orEmpty()
+
+            CardDetailScreen(
+                cardId = cardId,
                 onBackClick = { navController.popBackStack() }
             )
         }

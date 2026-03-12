@@ -31,6 +31,8 @@ fun AppTextField(
             onValueChange(finalValue)
         },
         label = { Text(label) },
+        singleLine = true,
+        maxLines = 1,
         modifier = modifier
             .widthIn(max = 420.dp)
             .fillMaxWidth(0.8f),

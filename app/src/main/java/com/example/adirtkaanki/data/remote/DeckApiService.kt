@@ -1,6 +1,5 @@
 package com.example.adirtkaanki.data.remote
 
-import com.example.adirtkaanki.data.remote.dto.CardDto
 import com.example.adirtkaanki.data.remote.dto.CreateDeckRequest
 import com.example.adirtkaanki.data.remote.dto.DeckDto
 import com.example.adirtkaanki.data.remote.dto.RenameDeckRequest
@@ -26,11 +25,6 @@ interface DecksApiService {
         @Path("id") id: String,
         @Body request: RenameDeckRequest
     ): DeckDto
-
-    @GET("decks/{id}/cards")
-    suspend fun getDeckCards(
-        @Path("id") id: String
-    ): List<CardDto>
 
     @DELETE("decks/{id}")
     suspend fun deleteDeck(

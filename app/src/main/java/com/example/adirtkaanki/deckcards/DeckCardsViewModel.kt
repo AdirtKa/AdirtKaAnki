@@ -5,8 +5,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.adirtkaanki.data.model.DeckCard
 import com.example.adirtkaanki.data.remote.ApiFactory
-import com.example.adirtkaanki.data.repository.DecksRepository
+import com.example.adirtkaanki.data.repository.CardsRepository
 import com.example.adirtkaanki.data.session.SessionManager
 import kotlinx.coroutines.launch
 
@@ -16,8 +17,8 @@ class DeckCardsViewModel(
     sessionManager: SessionManager
 ) : ViewModel() {
 
-    private val decksApi = ApiFactory.createDecksApiService(sessionManager)
-    private val decksRepository = DecksRepository(decksApi)
+    private val cardsApi = ApiFactory.createCardsApiService(sessionManager)
+    private val cardsRepository = CardsRepository(cardsApi)
 
     var uiState by mutableStateOf(DeckCardsUiState(deckName = deckName))
         private set
@@ -34,7 +35,7 @@ class DeckCardsViewModel(
                 errorMessage = null
             )
 
-            val result = decksRepository.getDeckCards(deckId)
+            val result = cardsRepository.listCards(deckId = deckId)
 
             uiState = if (result.isSuccess) {
                 uiState.copy(
@@ -47,6 +48,26 @@ class DeckCardsViewModel(
                     isLoading = false,
                     isRefreshing = false,
                     errorMessage = result.exceptionOrNull()?.message ?: "Failed to load cards"
+                )
+            }
+        }
+    }
+
+    fun deleteCard(card: DeckCard) {
+        viewModelScope.launch {
+            uiState = uiState.copy(isDeleting = true, errorMessage = null)
+
+            val result = cardsRepository.deleteCard(card.id)
+
+            uiState = if (result.isSuccess) {
+                uiState.copy(
+                    isDeleting = false,
+                    cards = uiState.cards.filter { it.id != card.id }
+                )
+            } else {
+                uiState.copy(
+                    isDeleting = false,
+                    errorMessage = result.exceptionOrNull()?.message ?: "Failed to delete card"
                 )
             }
         }

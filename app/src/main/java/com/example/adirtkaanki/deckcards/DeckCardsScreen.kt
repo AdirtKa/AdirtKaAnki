@@ -1,17 +1,22 @@
 package com.example.adirtkaanki.deckcards
 
-import android.content.res.Configuration
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.adirtkaanki.data.model.DeckCard
+import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun DeckCardsScreen(
     deckId: String,
     deckName: String,
-    onBackClick: () -> Unit
+    refreshSignal: StateFlow<Boolean>,
+    onRefreshHandled: () -> Unit,
+    onBackClick: () -> Unit,
+    onCreateCardClick: () -> Unit,
+    onCardClick: (String) -> Unit
 ) {
     val context = LocalContext.current
     val viewModel: DeckCardsViewModel = viewModel(
@@ -21,26 +26,21 @@ fun DeckCardsScreen(
             deckName = deckName
         )
     )
+    val shouldRefresh by refreshSignal.collectAsState()
+
+    LaunchedEffect(shouldRefresh) {
+        if (shouldRefresh) {
+            viewModel.loadCards()
+            onRefreshHandled()
+        }
+    }
 
     DeckCardsScreenContent(
         uiState = viewModel.uiState,
         onBackClick = onBackClick,
-        onRefresh = viewModel::refresh
-    )
-}
-
-@Preview(showBackground = true, showSystemUi = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
-@Composable
-private fun DeckCardsScreenPreview() {
-    DeckCardsScreenContent(
-        uiState = DeckCardsUiState(
-            deckName = "English words",
-            cards = listOf(
-                DeckCard(id = "1", front = "apple", back = "€блоко"),
-                DeckCard(id = "2", front = "book", back = "книга")
-            )
-        ),
-        onBackClick = {},
-        onRefresh = {}
+        onCreateCardClick = onCreateCardClick,
+        onRefresh = viewModel::refresh,
+        onCardClick = { card -> onCardClick(card.id) },
+        onDeleteCardClick = viewModel::deleteCard
     )
 }

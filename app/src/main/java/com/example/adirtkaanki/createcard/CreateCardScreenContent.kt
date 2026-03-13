@@ -1,9 +1,11 @@
 package com.example.adirtkaanki.createcard
 
+import com.example.adirtkaanki.R
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.net.Uri
 import android.widget.Toast
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -17,12 +19,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -40,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -426,12 +431,14 @@ private fun ImageSection(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             BorderActionButton(
-                text = "Choose from gallery",
+                text = "",
+                iconRes = R.drawable.ic_gallery,
                 onClick = onPickImageClick
             )
             if (value != null) {
                 BorderActionButton(
-                    text = "Remove",
+                    text = "",
+                    iconRes = R.drawable.ic_trash_bin,
                     onClick = onRemoveImageClick,
                     accentColor = MaterialTheme.colorScheme.error
                 )
@@ -475,17 +482,20 @@ private fun AudioSection(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             BorderActionButton(
-                text = "Choose file",
+                text = "",
+                iconRes = R.drawable.ic_wav,
                 onClick = onPickAudioClick
             )
             BorderActionButton(
-                text = if (isRecording) "Stop recording" else "Record",
+                text = "",
+                iconRes = if (isRecording) R.drawable.ic_stop_playback else R.drawable.ic_microphone,
                 onClick = if (isRecording) onStopAudioRecordingClick else onRecordAudioClick,
                 accentColor = if (isRecording) MaterialTheme.colorScheme.error else null
             )
             if (value != null) {
                 BorderActionButton(
-                    text = "Remove",
+                    text = "",
+                    iconRes = R.drawable.ic_trash_bin,
                     onClick = onRemoveAudioClick,
                     accentColor = MaterialTheme.colorScheme.error
                 )
@@ -498,6 +508,7 @@ private fun AudioSection(
 private fun BorderActionButton(
     text: String,
     onClick: () -> Unit,
+    @DrawableRes iconRes: Int? = null,
     accentColor: Color? = null
 ) {
     val resolvedColor = accentColor ?: MaterialTheme.colorScheme.onBackground
@@ -505,7 +516,10 @@ private fun BorderActionButton(
     Button(
         onClick = onClick,
         shape = RoundedCornerShape(18.dp),
-        border = BorderStroke(1.dp, resolvedColor.copy(alpha = if (accentColor == null) 0.25f else 0.45f)),
+        border = BorderStroke(
+            1.dp,
+            resolvedColor.copy(alpha = if (accentColor == null) 0.25f else 0.45f)
+        ),
         colors = ButtonDefaults.buttonColors(
             containerColor = Color.Transparent,
             contentColor = resolvedColor,
@@ -513,11 +527,26 @@ private fun BorderActionButton(
             disabledContentColor = resolvedColor.copy(alpha = 0.5f)
         )
     ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            if (iconRes != null) {
+                Icon(
+                    painter = painterResource(id = iconRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            if (text != "") {
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+        }
     }
 }
 
@@ -554,7 +583,8 @@ private fun MediaPreview(audioSource: Any) {
             color = MaterialTheme.colorScheme.onBackground
         )
         BorderActionButton(
-            text = if (isPlaying) "Stop" else "Play",
+            text = "",
+            iconRes = if (isPlaying) R.drawable.ic_stop_playback else R.drawable.ic_play,
             onClick = {
                 if (isPlaying) {
                     mediaPlayer.pause()

@@ -308,7 +308,7 @@ private fun DeckStatsRow(stats: DeckCardStats) {
     ) {
         DeckStatChip(
             modifier = Modifier.weight(1f),
-            label = "Not studied",
+            label = "New",
             value = stats.notStudied.toString(),
             accentColor = MaterialTheme.colorScheme.tertiary
         )

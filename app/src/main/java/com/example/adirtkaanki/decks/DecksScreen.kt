@@ -14,6 +14,7 @@ import com.example.adirtkaanki.data.model.Deck
 
 @Composable
 fun DecksScreen(
+    onDeckClick: (Deck) -> Unit,
     onShowCardsClick: (Deck) -> Unit
 ) {
     val context = LocalContext.current
@@ -37,7 +38,7 @@ fun DecksScreen(
         showCreateDeckDialog = showCreateDeckDialog,
         showRenameDeckDialog = showRenameDeckDialog,
         deckName = deckName,
-        onDeckNameChange = { deckName = it },
+        onDeckNameChange = { deckName = it.take(100) },
         onShowCreateDeckDialog = { showCreateDeckDialog = true },
         onDismissCreateDeckDialog = {
             if (!uiState.isCreating) {
@@ -63,6 +64,10 @@ fun DecksScreen(
                 deckForRename = null
                 deckName = ""
             }
+        },
+        onDeckClick = { deck ->
+            selectedDeckForMenu = null
+            onDeckClick(deck)
         },
         onConfirmRenameDeck = {
             val deck = deckForRename
@@ -118,6 +123,7 @@ private fun DecksScreenPreview() {
         onDismissCreateDeckDialog = {},
         onConfirmCreateDeck = {},
         onShowRenameDeckDialog = {},
+        onDeckClick = {},
         onDismissRenameDeckDialog = {},
         onConfirmRenameDeck = {},
         onShowCardsClick = {},

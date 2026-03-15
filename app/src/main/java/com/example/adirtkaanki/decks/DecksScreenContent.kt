@@ -53,6 +53,7 @@ fun DecksScreenContent(
     onDismissCreateDeckDialog: () -> Unit,
     onConfirmCreateDeck: () -> Unit,
     onShowRenameDeckDialog: (Deck) -> Unit,
+    onDeckClick: (Deck) -> Unit,
     onDismissRenameDeckDialog: () -> Unit,
     onConfirmRenameDeck: () -> Unit,
     onShowCardsClick: (Deck) -> Unit,
@@ -144,7 +145,7 @@ fun DecksScreenContent(
                                         shape = RoundedCornerShape(20.dp)
                                     )
                                     .combinedClickable(
-                                        onClick = {},
+                                        onClick = { onDeckClick(deck) },
                                         onLongClick = { onDeckLongClick(deck) }
                                     )
                                     .padding(16.dp),

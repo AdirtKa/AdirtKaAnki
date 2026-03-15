@@ -20,6 +20,7 @@ import com.example.adirtkaanki.decks.DecksScreen
 import com.example.adirtkaanki.editcard.EditCardScreen
 import com.example.adirtkaanki.login.LoginScreen
 import com.example.adirtkaanki.register.RegisterScreen
+import com.example.adirtkaanki.review.ReviewScreen
 import com.example.adirtkaanki.splash.SplashScreen
 
 @Composable
@@ -34,7 +35,7 @@ fun AppNavHost(
             SessionState.Loading -> Unit
             SessionState.LoggedIn -> {
                 val currentRoute = navController.currentBackStackEntry?.destination?.route
-                if (currentRoute != Routes.DECKS) {
+                if (currentRoute == null || currentRoute == Routes.SPLASH || currentRoute == Routes.LOGIN || currentRoute == Routes.REGISTER) {
                     navController.navigate(Routes.DECKS) {
                         popUpTo(0) { inclusive = true }
                         launchSingleTop = true
@@ -43,7 +44,7 @@ fun AppNavHost(
             }
             SessionState.LoggedOut -> {
                 val currentRoute = navController.currentBackStackEntry?.destination?.route
-                if (currentRoute != Routes.LOGIN) {
+                if (currentRoute != null && currentRoute != Routes.LOGIN) {
                     navController.navigate(Routes.LOGIN) {
                         popUpTo(0) { inclusive = true }
                         launchSingleTop = true
@@ -67,7 +68,32 @@ fun AppNavHost(
         }
 
         composable(Routes.DECKS, enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }, popEnterTransition = { EnterTransition.None }, popExitTransition = { ExitTransition.None }) {
-            DecksScreen(onShowCardsClick = { deck: Deck -> navController.navigate(Routes.deckCards(deck.id, deck.name)) })
+            DecksScreen(
+                onDeckClick = { deck: Deck -> navController.navigate(Routes.deckReview(deck.id, deck.name)) },
+                onShowCardsClick = { deck: Deck -> navController.navigate(Routes.deckCards(deck.id, deck.name)) }
+            )
+        }
+
+        composable(
+            route = Routes.DECK_REVIEW,
+            arguments = listOf(
+                navArgument(Routes.DECK_REVIEW_ID_ARG) { type = NavType.StringType },
+                navArgument(Routes.DECK_REVIEW_NAME_ARG) { type = NavType.StringType }
+            ),
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None }
+        ) { backStackEntry ->
+            val deckId = backStackEntry.arguments?.getString(Routes.DECK_REVIEW_ID_ARG).orEmpty()
+            val deckName = Uri.decode(backStackEntry.arguments?.getString(Routes.DECK_REVIEW_NAME_ARG).orEmpty())
+
+            ReviewScreen(
+                deckId = deckId,
+                deckName = deckName,
+                onBackClick = { navController.popBackStack() },
+                onViewCardsClick = { navController.navigate(Routes.deckCards(deckId, deckName)) }
+            )
         }
 
         composable(

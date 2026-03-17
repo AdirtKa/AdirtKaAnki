@@ -7,6 +7,7 @@ object Routes {
     const val REGISTER = "register"
     const val DECKS = "decks"
     const val SPLASH = "splash"
+    const val STATS = "stats"
 
     private const val DECK_ID_ARG = "deckId"
     private const val DECK_NAME_ARG = "deckName"

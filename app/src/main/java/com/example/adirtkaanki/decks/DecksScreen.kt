@@ -3,9 +3,9 @@ package com.example.adirtkaanki.decks
 import android.content.res.Configuration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
@@ -15,7 +15,8 @@ import com.example.adirtkaanki.data.model.Deck
 @Composable
 fun DecksScreen(
     onDeckClick: (Deck) -> Unit,
-    onShowCardsClick: (Deck) -> Unit
+    onShowCardsClick: (Deck) -> Unit,
+    onShowStatsClick: () -> Unit
 ) {
     val context = LocalContext.current
     val viewModel: DecksViewModel = viewModel(factory = DecksViewModelFactory(context))
@@ -58,16 +59,16 @@ fun DecksScreen(
             showRenameDeckDialog = true
             selectedDeckForMenu = null
         },
+        onDeckClick = { deck ->
+            selectedDeckForMenu = null
+            onDeckClick(deck)
+        },
         onDismissRenameDeckDialog = {
             if (!uiState.isRenaming) {
                 showRenameDeckDialog = false
                 deckForRename = null
                 deckName = ""
             }
-        },
-        onDeckClick = { deck ->
-            selectedDeckForMenu = null
-            onDeckClick(deck)
         },
         onConfirmRenameDeck = {
             val deck = deckForRename
@@ -83,6 +84,7 @@ fun DecksScreen(
             selectedDeckForMenu = null
             onShowCardsClick(deck)
         },
+        onShowStatsClick = onShowStatsClick,
         onRefresh = viewModel::refresh,
         onLogoutClick = viewModel::onLogout,
         selectedDeckForMenu = selectedDeckForMenu,
@@ -127,6 +129,7 @@ private fun DecksScreenPreview() {
         onDismissRenameDeckDialog = {},
         onConfirmRenameDeck = {},
         onShowCardsClick = {},
+        onShowStatsClick = {},
         onRefresh = {},
         onLogoutClick = {},
         onDeckLongClick = {},

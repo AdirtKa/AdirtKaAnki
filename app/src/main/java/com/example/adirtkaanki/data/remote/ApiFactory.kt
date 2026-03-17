@@ -73,6 +73,10 @@ object ApiFactory {
         return createMainRetrofit(sessionManager).create(ReviewApiService::class.java)
     }
 
+    fun createStatsApiService(sessionManager: SessionManager): StatsApiService {
+        return createMainRetrofit(sessionManager).create(StatsApiService::class.java)
+    }
+
     fun createMediaApiService(sessionManager: SessionManager): MediaApiService {
         return createMainRetrofit(sessionManager).create(MediaApiService::class.java)
     }

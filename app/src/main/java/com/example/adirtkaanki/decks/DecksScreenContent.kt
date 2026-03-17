@@ -57,6 +57,7 @@ fun DecksScreenContent(
     onDismissRenameDeckDialog: () -> Unit,
     onConfirmRenameDeck: () -> Unit,
     onShowCardsClick: (Deck) -> Unit,
+    onShowStatsClick: () -> Unit,
     onRefresh: () -> Unit,
     onLogoutClick: () -> Unit,
     selectedDeckForMenu: Deck?,
@@ -78,24 +79,49 @@ fun DecksScreenContent(
             color = MaterialTheme.colorScheme.onBackground
         )
 
-        Button(
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            onClick = onShowCreateDeckDialog,
-            shape = RoundedCornerShape(20.dp),
-            border = BorderStroke(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)
-            ),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Transparent,
-                contentColor = MaterialTheme.colorScheme.onBackground
-            )
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                text = "Create deck",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium
-            )
+            Button(
+                modifier = Modifier.weight(1f),
+                onClick = onShowCreateDeckDialog,
+                shape = RoundedCornerShape(20.dp),
+                border = BorderStroke(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)
+                ),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = MaterialTheme.colorScheme.onBackground
+                )
+            ) {
+                Text(
+                    text = "Create deck",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            Button(
+                modifier = Modifier.weight(1f),
+                onClick = onShowStatsClick,
+                shape = RoundedCornerShape(20.dp),
+                border = BorderStroke(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)
+                ),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = MaterialTheme.colorScheme.onBackground
+                )
+            ) {
+                Text(
+                    text = "Statistics",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
         }
 
         uiState.errorMessage?.let { error ->

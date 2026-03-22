@@ -377,13 +377,17 @@ private fun ReviewHeatmap(points: List<ReviewHistoryPoint>) {
 
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.Top) {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                listOf("M", "W", "F").forEach { label ->
-                    Text(
-                        text = label,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.65f),
-                        modifier = Modifier.height(14.dp)
-                    )
+                listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun").forEach { label ->
+                    Box(
+                        modifier = Modifier.height(14.dp),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.65f)
+                        )
+                    }
                 }
             }
 
